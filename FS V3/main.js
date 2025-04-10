@@ -40,6 +40,8 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 }
 
+
+
 function startBackend() {
   const server = express();
   server.use(cors());

@@ -6,8 +6,8 @@ export const catalog = [
 export async function fetchCatalog(filter) {
   const baseUrl = 'https://consumet.8man.me/anime/zoro';
   const url = filter === 'recent'
-    ? `${baseUrl}/recent-episodes`
-    : `${baseUrl}/top-airing`;
+    ? `${baseUrl}/recent-movies`
+    : `${baseUrl}/recent-shows`;
 
   const res = await fetch(url);
   const data = await res.json();
@@ -87,9 +87,9 @@ export async function watch(episodeId) {
       const url = `https://consumet.8man.me/anime/zoro/watch?episodeId=${encodeURIComponent(id)}`;
       const res = await fetch(url);
       const data = await res.json();
-
+           
       if (data.sources && data.sources.length) {
-        return {
+        const result = {
           sources: data.sources.map(src => ({
             url: src.url,
             quality: src.quality || "default"
@@ -102,7 +102,11 @@ export async function watch(episodeId) {
             Referer: "https://consumet.8man.me"
           }
         };
+      
+        console.log("✅ Parsed Episode Data:", result);
+        return result;
       }
+      
 
       lastError = new Error(`No sources from server ${server}`);
     } catch (err) {

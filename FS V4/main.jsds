@@ -1,0 +1,36 @@
+import express from 'express';
+import cors from 'cors';
+import { multiGetStream } from './multiGetStream.js';
+
+const app = express();
+const PORT = 3000;
+
+// Enable CORS before routes
+app.use(cors());
+
+// Serve static files from 'public' (e.g., test.html)
+app.use(express.static('public'));
+
+// Route to fetch stream
+app.get('/stream', async (req, res) => {
+    const pageUrl = req.query.url;
+    console.log('Fetching stream for:', pageUrl);
+  
+    if (!pageUrl) {
+      return res.status(400).json({ error: 'Missing url param' });
+    }
+  
+    const streams = await multiGetStream(pageUrl, 'movie');
+    console.log('Found streams:', streams);
+  
+    if (!streams.length || !streams[0].link) {
+      return res.status(404).json({ error: 'No stream URL found' });
+    }
+  
+    res.json({ streamUrl: streams[0].link });
+  });
+  
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});

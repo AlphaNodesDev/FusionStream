@@ -8,6 +8,11 @@
       "enable": true,
       "displayname": "V2 (TV,Movies,Anime)",
       "link": "https://multimovies.press"
+    },
+    "dramacool":{
+      "enable": true,
+      "displayname": "V2 (TV Series",
+      "link": "https://multimovies.press"
     }
   }
   

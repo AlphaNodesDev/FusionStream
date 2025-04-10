@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MultiMovies Player</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    video { width: 100%; max-width: 800px; height: auto; }
+  </style>
+</head>
+<body>
+  <h2>Movie Stream: Pushpa 2</h2>
+  <video id="videoPlayer" width="640" height="360" controls></video>
+  <p id="status">Loading stream...</p>
+  <script>
+    async function loadStream() {
+      const movieUrl = 'https://multimovies.guru/movies/pushpa-2-the-rule/';
+      const res = await fetch(`/stream?url=${encodeURIComponent(movieUrl)}`);
+      const data = await res.json();
+      const videoUrl = data.streamUrl;
+  
+      if (!videoUrl) throw new Error('No stream URL found');
+  
+      const video = document.getElementById('videoPlayer');
+      video.src = videoUrl;
+      video.play();
+    }
+  
+    window.onload = loadStream;
+  </script>
+  
+</body>
+</html>

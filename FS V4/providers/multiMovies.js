@@ -1,5 +1,8 @@
+// multimovies.ts
+
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import FormData from 'form-data';
 
 export const catalog = [
   { title: 'Trending', filter: '/trending/' },
@@ -24,8 +27,7 @@ export async function fetchCatalog(filter) {
   const res = await fetch(url);
   const html = await res.text();
   const { JSDOM } = await import('jsdom');
-  const dom = new JSDOM(html);
-  const doc = dom.window.document;
+  const doc = new JSDOM(html).window.document;
 
   const items = [...doc.querySelectorAll('.items.full > *')].map(el => {
     const img = el.querySelector('.poster img');
@@ -65,9 +67,15 @@ export async function search(query) {
 async function multiGetInfo(link) {
   try {
     const res = await axios.get(link, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        'Referer': 'https://gdmirrorbot.nl/', // This is important – the site you got the embed from
+        'Accept': '*/*',
+        'Origin': 'https://gdmirrorbot.nl',
+        'Connection': 'keep-alive'
+      }
     });
-
     const $ = cheerio.load(res.data);
     const type = link.includes('tvshows') ? 'series' : 'movie';
     const title = decodeURIComponent(link.split('/').filter(Boolean).pop() || '').replace(/-/g, ' ');
@@ -150,31 +158,64 @@ export async function fetchInfo(id) {
   }
 }
 
+
 export async function watch(episodeId) {
+  console.log("🎬 Starting stream fetch for:", episodeId);
+  try {
+    const streamLinks = await multiGetStream(episodeId, 'movie');
+
+    if (!streamLinks.length) {
+      throw new Error('No valid stream links found');
+    }
+
+    const primary = streamLinks[0];
+
+    return {
+      sources: [
+        {
+          url: primary.link,
+          quality: 'auto', // or you could extract variant qualities later
+        },
+      ],
+      subtitles: primary.subtitles || [],
+      headers: {
+        Referer: new URL(episodeId).origin + '/',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      },
+    };
+  } catch (err) {
+    console.error('❌ watch() failed:', err.message);
+    throw new Error('Failed to fetch stream');
+  }
+}
+
+
+
+
+export async function getMultiMoviesStream(url) {
   const headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-    Referer: 'https://multimovies.online/',
+    'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Microsoft Edge";v="120"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    'Referer': 'https://multimovies.online/',
+    'Sec-Fetch-User': '?1',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+    'Origin': 'https://multimovies.online',
+    'X-Requested-With': 'XMLHttpRequest',
   };
 
   try {
-    const res = await fetch(episodeId, { headers });
-    if (!res.ok) throw new Error('Failed to load episode page');
+    const res = await axios.get(url, { headers });
+    const html = res.data;
+    const $ = cheerio.load(html);
 
-    const html = await res.text();
-    const { JSDOM } = await import('jsdom');
-    const doc = new JSDOM(html).window.document;
+    const postId = $('#player-option-1').attr('data-post') ?? '';
+    const nume = $('#player-option-1').attr('data-nume') ?? '';
+    const typeValue = $('#player-option-1').attr('data-type') ?? '';
 
-    const playerEl = doc.querySelector('[data-post][data-nume][data-type]');
-    const postId = playerEl?.getAttribute('data-post');
-    const nume = playerEl?.getAttribute('data-nume');
-    const typeValue = playerEl?.getAttribute('data-type');
+    const baseUrl = url.split('/').slice(0, 3).join('/');
 
-    if (!postId || !nume || !typeValue) {
-      throw new Error('Missing data attributes');
-    }
-
-    const baseUrl = new URL(episodeId).origin;
-    const formData = new URLSearchParams();
+    const formData = new FormData();
     formData.append('action', 'doo_player_ajax');
     formData.append('post', postId);
     formData.append('nume', nume);
@@ -182,44 +223,96 @@ export async function watch(episodeId) {
 
     const playerRes = await fetch(`${baseUrl}/wp-admin/admin-ajax.php`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        ...headers
-      },
+      headers,
       body: formData,
     });
-  
+
     const playerData = await playerRes.json();
-    let iframeUrl =
-      playerData?.embed_url?.match(/<iframe[^>]+src="([^"]+)"/i)?.[1] ||
-      playerData?.embed_url;
+    let ifameUrl = playerData?.embed_url?.match(/<iframe[^>]+src=["']([^"']+)["']/i)?.[1] || playerData?.embed_url;
 
-    // Optional: extract stream from iframe
-    const iframeRes = await fetch(iframeUrl, { headers });
-    const iframeHtml = await iframeRes.text();
+    if (!ifameUrl.includes('multimovies')) {
+      let playerBaseUrl = ifameUrl.split('/').slice(0, 3).join('/');
+      const headRes = await axios.head(playerBaseUrl, { headers });
 
-    // Extract stream
-    const streamUrl = iframeHtml.match(/file:\s*"([^"]+\.m3u8[^"]*)"/)?.[1];
-    if (!streamUrl) throw new Error('No stream URL found');
+      if (headRes?.request?.res?.responseUrl) {
+        playerBaseUrl = headRes.request.res.responseUrl.split('/').slice(0, 3).join('/');
+      }
 
-    const subtitleMatches = iframeHtml.match(/https:\/\/[^\s"]+\.vtt/g) || [];
-    const subtitles = subtitleMatches.map(sub => {
-      const lang = sub.match(/_([a-zA-Z]{3})\.vtt$/)?.[1] || 'eng';
-      return {
-        language: lang,
-        uri: sub,
-        title: lang,
-        type: 'vtt',
-      };
-    });
+      const playerId = ifameUrl.split('/').pop();
+      const newFormData = new FormData();
+      newFormData.append('sid', playerId);
 
-    return {
-      sources: [{ url: streamUrl, quality: 'auto' }],
-      subtitles,
-      headers: { Referer: baseUrl }
-    };
+      const newPlayerRes = await fetch(`${playerBaseUrl}/embedhelper.php`, {
+        method: 'POST',
+        headers,
+        body: newFormData,
+      });
+
+      const newPlayerData = await newPlayerRes.json();
+      let siteId;
+      try {
+        siteId = JSON.parse(atob(newPlayerData?.mresult))?.smwh;
+      } catch (e) {
+        siteId = newPlayerData?.mresult?.smwh;
+      }
+
+      const siteUrl = newPlayerData?.siteUrls?.smwh;
+      ifameUrl = siteUrl + siteId;
+    }
+
+    const iframeRes = await axios.get(ifameUrl, { headers });
+    const iframeData = iframeRes.data;
+
+    const functionRegex = /eval\(function\((.*?)\)\{.*?return p\}.*?\('(.*?)'\.split/;
+    const match = functionRegex.exec(iframeData);
+
+    let decodedScript = '';
+    if (match) {
+      const encodedString = match[2];
+      decodedScript = encodedString.split("',36,")[0];
+      const a = 36;
+      const k = encodedString.split("',36,")[1].slice(2).split('|');
+      let c = k.length;
+
+      while (c--) {
+        if (k[c]) {
+          const regex = new RegExp('\\b' + c.toString(a) + '\\b', 'g');
+          decodedScript = decodedScript.replace(regex, k[c]);
+        }
+      }
+    }
+
+    const streamUrl = decodedScript?.match(/file:\s*"([^"]+\.m3u8[^"]*)"/)?.[1];
+    const subtitles = [];
+    const subtitleMatch = decodedScript?.match(/https:\/\/[^\s"]+\.vtt/g);
+
+    if (subtitleMatch?.length) {
+      subtitleMatch.forEach(sub => {
+        const langMatch = sub.match(/_([a-zA-Z]{3})\.vtt$/);
+        const lang = langMatch ? langMatch[1] : 'eng';
+        subtitles.push({
+          language: lang,
+          uri: sub,
+          type: 'vtt',
+          title: lang,
+        });
+      });
+    }
+
+    if (streamUrl) {
+      return [
+        {
+          server: 'Multi',
+          link: streamUrl.replace(/&i=\d+(\.\d+)?&/, '&i=0.4&'),
+          type: 'm3u8',
+          subtitles,
+        },
+      ];
+    }
+
+    return [];
   } catch (err) {
-    console.error('❌ watch() failed:', err.message);
-    throw new Error('Failed to fetch stream');
+    console.error('Error fetching stream:', err);
+    return [];
   }
 }

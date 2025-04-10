@@ -146,26 +146,48 @@
       document.getElementById("episode-buttons").innerHTML = `<p>Failed to load info.</p>`;
     }
   }
-
   function renderEpisodes(episodes, provider) {
-    if (!episodes.length) {
-      document.getElementById("episode-buttons").innerHTML = "<p>No episodes available.</p>";
-      return;
-    }
+  const container = document.getElementById("episode-buttons");
 
-    const buttons = episodes.map(ep => {
-      const epNum = ep.number || ep.episode || "N/A";
-      const epId = encodeURIComponent(ep.id || ep.url || ep.video || epNum);
-      const title = encodeURIComponent(ep.title || "");
-
-      return `<button onclick="window.location.href='player.html?episodeId=${epId}&title=${title}&provider=${provider}'">Episode ${epNum}</button>`;
-    }).join("");
-
-    document.getElementById("episode-buttons").innerHTML = buttons;
+  if (!Array.isArray(episodes) || episodes.length === 0) {
+    container.innerHTML = "<p>No episodes available.</p>";
+    return;
   }
+
+  console.log(`Rendering ${episodes.length} episodes`);
+
+  container.innerHTML = ""; // Clear before adding new buttons
+
+  episodes.forEach((ep, index) => {
+    const epNum = ep.number || index + 1;
+    const rawId = ep.id || ep.url || ep.video || epNum;
+    const titleText = ep.title || `Episode ${epNum}`;
+
+    const button = document.createElement("button");
+    button.textContent = `Episode ${epNum}`;
+    button.dataset.episodeId = rawId;
+    button.dataset.title = titleText;
+    button.dataset.provider = provider;
+
+    // Log for debug
+    console.log(`[Episode ${index + 1}] ID:`, rawId, '| Title:', titleText);
+
+    // Add event listener
+    button.addEventListener("click", () => {
+      const epId = encodeURIComponent(button.dataset.episodeId);
+      const title = encodeURIComponent(button.dataset.title);
+      const provider = encodeURIComponent(button.dataset.provider);
+      const url = `player.html?episodeId=${epId}&title=${title}&provider=${provider}`;
+      window.location.href = url;
+    });
+
+    container.appendChild(button);
+  });
+}
 
   loadInfo();
 </script>
+
 <div class="copyright">
 
 </div>

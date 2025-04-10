@@ -199,6 +199,12 @@
   pointer-events: none;
 }
 
+.episode.active {
+  background: rgba(0, 255, 0, 0.4);
+  border: 2px solid #00ff00;
+}
+
+
   </style>
 </head>
 
@@ -223,6 +229,7 @@
       </div>
     </div>
   </header>
+  <h2 id="episodeTitle" style="color: #00ff00; text-align: center; margin-top: 70px; font-size: 22px;"></h2>
   <video id="video" controls crossorigin="anonymous"></video>
   <div id="vlcOverlay" class="hidden">
     <div class="vlcSpinner"></div>
@@ -245,6 +252,18 @@
   </div>
 
   <script>
+let currentActiveEpisode = null;
+function highlightEpisode(episodeId) {
+  const episodeDivs = document.querySelectorAll(".episode");
+  episodeDivs.forEach(div => {
+    if (div.dataset.id === episodeId) {
+      div.classList.add("active");
+      currentActiveEpisode = div;
+    } else {
+      div.classList.remove("active");
+    }
+  });
+}
 
 document.getElementById("playOnVLC").addEventListener("click", async () => {
   const streamUrl = currentHls?.url || currentHls?.loadSource || "";
@@ -323,6 +342,7 @@ document.getElementById("playOnVLC").addEventListener("click", async () => {
     async function playEpisode(episodeId) {
       const overlay = document.getElementById("vlcOverlay");
       overlay.classList.remove("hidden"); // Show VLC-style overlay
+      highlightEpisode(episodeId);
       try {
         const data = await fetchEpisodeData(episodeId);
         const source = data.sources?.[0]?.url;
@@ -395,16 +415,24 @@ document.getElementById("playOnVLC").addEventListener("click", async () => {
     playEpisode(currentEpisodeId);
 
     async function loadEpisodeList() {
-      const infoRes = await fetch(`http://localhost:3000/info?provider=${provider}&id=${encodeURIComponent(currentEpisodeId.split("$")[0])}`);
-      const info = await infoRes.json();
-      info.episodes.forEach((ep) => {
-        const div = document.createElement("div");
-        div.className = "episode";
-        div.textContent = `Ep ${ep.number}: ${ep.title}`;
-        div.onclick = () => playEpisode(ep.id);
-        sidebar.appendChild(div);
-      });
+  const infoRes = await fetch(`http://localhost:3000/info?provider=${provider}&id=${encodeURIComponent(currentEpisodeId.split("$")[0])}`);
+  const info = await infoRes.json();
+  info.episodes.forEach((ep) => {
+    const div = document.createElement("div");
+    div.className = "episode";
+    div.textContent = `Ep ${ep.number}: ${ep.title}`;
+    div.dataset.id = ep.id;
+    div.onclick = () => playEpisode(ep.id);
+    sidebar.appendChild(div);
+
+    // ✅ Auto-highlight if this is the currently playing episode
+    if (ep.id === currentEpisodeId) {
+      div.classList.add("active");
+      currentActiveEpisode = div;
     }
+  });
+}
+
 
     loadEpisodeList();
 
@@ -466,6 +494,10 @@ document.getElementById("playOnVLC").addEventListener("click", async () => {
       }
     };
     dragElement(document.getElementById("videoControls"));
+
+
+
+
   </script>
 
   <script src="../js/renderer.js"></script>
