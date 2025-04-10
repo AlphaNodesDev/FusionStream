@@ -6,14 +6,6 @@
       "description": "Enables Discord Rich Presence while watching.",
       "image": "https://i.ibb.co/bgwNyMH4/8b81eb984a67f6652e430b88962a1bd4.jpg",
       "url": "https://raw.githubusercontent.com/AlphaNodesDev/FusionStream/main/plugins/discord-rpc.js"
-    },
-    {
-      "id": "sample-ext.js",
-      "name": "sample",
-      "version": "1.0.0",
-      "description": "sample",
-      "image": "https://i.ibb.co/bgwNyMH4/8b81eb984a67f6652e430b88962a1bd4.jpg",
-      "url": "https://raw.githubusercontent.com/AlphaNodesDev/FusionStream/main/plugins/sample-ext.js"
     }
   ]
   
