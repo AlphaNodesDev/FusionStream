@@ -1,12 +1,12 @@
 {
     "zoro": {
-      "enable": false,
+      "enable": true,
       "displayname": "V1 (Anime)",
       "link": "https://consumet.8man.me/anime/zoro"
     },
     "multimovies": {
       "enable": false,
-      "displayname": "V 1 (TV,Movies,Anime)",
+      "displayname": "V2 (TV,Movies,Anime)",
       "link": "https://multimovies.press"
     }
   }
