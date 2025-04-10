@@ -1,2 +1,15 @@
-/FS V4
-/Old models
+/FS V1/node_modules
+/FS V1/dist
+/FS V1/FS-V3-Design
+/FS V1/build
+/FS V2/node_modules
+/FS V2/dist
+/FS V2/build
+/FS V3/node_modules
+/FS V3/dist
+/FS V3/build
+/FS V4/node_modules
+/FS V4/dist
+/FS V4/build
+.env
+

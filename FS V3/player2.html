@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fusion Stream Web interface</title>
+  <link rel="stylesheet" href="../FS-V3-Design/swiper-bundle.min.css">
+  <link rel="stylesheet" href="../FS-V3-Design/styles.css">
+  <link rel="shortcut icon" href="img/logo2.png" type="image/x-icon">
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+  <style>
+    #anime-player {
+      width: 100%;
+      max-width: 900px;
+      margin: 20px auto;
+      display: block;
+      border-radius: 10px;
+    }
+
+    .episode-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .episode-card {
+      background: #222;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .episode-card:hover {
+      background: #444;
+    }
+
+    .episode-card.active {
+      background-color: #007bff;
+      font-weight: bold;
+    }
+
+    #quality-select, #vlc-button {
+      margin: 10px 0;
+      padding: 6px 12px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    #vlc-button {
+      background-color: #28a745;
+      color: #fff;
+      cursor: pointer;
+    }
+    #anime-title {
+  display: block;
+  font-size: 1.8em;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+
+    header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: #111;
+  height: 60px; /* or match your actual nav height */
+}
+
+.play-container.container {
+  margin-top: 80px; /* Push content below header */
+  position: relative;
+  z-index: 1;
+}
+.play-text {
+  z-index: 1;
+  position: relative;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.play-text h2 {
+  margin: 0;
+  font-size: 2em;
+}
+#current-episode-title {
+  margin-top: 5px;
+}
+
+
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="nav container">
+    <a href="index.html" class="logo"><span>Fusion</span> Stream</a>
+    <div class="search-box">
+      <input type="search" id="search-input" placeholder="Search Movies">
+      <i class='bx bx-search'></i>
+    </div>
+    <div class="navbar">
+      <a href="./index.html" class="nav-link nav-active"><i class='bx bx-home'></i><span>Home</span></a>
+      <a href="search.html" class="nav-link"><i class='bx bx-search-alt'></i><span>Search</span></a>
+      <a href="extentions.html" class="nav-link"><i class='bx bx-extension'></i><span>Extensions</span></a>
+      <a href="settings.html" class="nav-link"><i class='bx bx-cog'></i><span>Settings</span></a>
+    </div>
+  </div>
+</header>
+
+<!-- Play Movie Section -->
+<div class="play-container container">
+  <div class="play-text">
+    <h2 id="anime-title">Title Loading…</h2>
+    <div id="current-episode-title" style="font-size: 1.2em; font-weight: bold;"></div>
+  </div>
+
+  <!-- move this AFTER play-text -->
+  <video id="anime-player" controls poster=""></video>
+  <label for="quality-select">Quality:</label>
+  <select id="quality-select"></select>
+  <button id="vlc-button">▶️ Watch in VLC</button>
+
+  <!-- Episodes -->
+  <div id="episode-list" class="episode-list"></div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script type="module">
+  const urlParams = new URLSearchParams(window.location.search);
+  const fullEpisodeId = urlParams.get('episodeId');
+  const provider = localStorage.getItem('selectedProvider') || 'hiAnime';
+  const animeId = provider === 'multiMovies' ? fullEpisodeId : fullEpisodeId?.split('$')[0];
+
+  let episodeCardMap = {};
+  let hls;
+  let currentStreamUrl = '';
+
+  function highlightEpisode(epId) {
+    Object.values(episodeCardMap).forEach(c => c.classList.remove('active'));
+    if (episodeCardMap[epId]) episodeCardMap[epId].classList.add('active');
+  }
+
+  async function playEpisode(epId, { autoplay = true } = {}) {
+    const video = document.getElementById('anime-player');
+    const qualitySelect = document.getElementById('quality-select');
+    video.innerHTML = '';
+    qualitySelect.innerHTML = '';
+    currentStreamUrl = '';
+
+    if (hls) {
+      hls.destroy();
+      hls = null;
+    }
+
+    try {
+      const card = episodeCardMap[epId];
+      document.getElementById('current-episode-title').textContent = card?.textContent || '';
+
+      let streamUrl = '', subtitles = [];
+
+      if (provider === 'hiAnime') {
+        const res = await fetch(`https://consumet.8man.me/anime/zoro/watch?episodeId=${epId}$sub`);
+        const data = await res.json();
+        streamUrl = data.sources?.[0]?.url;
+        subtitles = data.subtitles || [];
+      } else {
+        const backendUrl = `http://localhost:3000/multimovies/stream?episodeUrl=${encodeURIComponent(epId)}`;
+        const res = await fetch(backendUrl);
+        const data = await res.json();
+        streamUrl = data?.link;
+        subtitles = data?.subtitles || [];
+      }
+
+      if (!streamUrl) throw new Error("Stream not found");
+      currentStreamUrl = streamUrl;
+
+      // VLC Button
+      document.getElementById('vlc-button').onclick = () => {
+        navigator.clipboard.writeText(currentStreamUrl).then(() => {
+          alert("✅ URL copied. Open VLC > Media > Open Network Stream.");
+        }).catch(() => {
+          prompt("Copy URL manually:", currentStreamUrl);
+        });
+      };
+
+      subtitles.forEach(sub => {
+        if (!sub.url || sub.lang === 'thumbnails') return;
+        const track = document.createElement('track');
+        track.kind = 'subtitles';
+        track.label = sub.language || sub.lang;
+        track.srclang = (sub.language || sub.lang).slice(0, 2).toLowerCase();
+        track.src = sub.uri || sub.url;
+        track.default = (sub.language || '').toLowerCase().includes('english');
+        video.appendChild(track);
+      });
+
+      if (Hls.isSupported()) {
+        hls = new Hls();
+        hls.loadSource(streamUrl);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          const autoOption = document.createElement('option');
+          autoOption.value = -1;
+          autoOption.text = 'Auto';
+          qualitySelect.appendChild(autoOption);
+
+          hls.levels.forEach((level, idx) => {
+            const option = document.createElement('option');
+            option.value = idx;
+            option.text = `${level.height}p`;
+            qualitySelect.appendChild(option);
+          });
+
+          qualitySelect.value = hls.currentLevel;
+          qualitySelect.onchange = function () {
+            hls.currentLevel = parseInt(this.value);
+          };
+
+          if (autoplay) video.play();
+        });
+      } else {
+        video.src = streamUrl;
+        if (autoplay) video.addEventListener('loadedmetadata', () => video.play());
+      }
+
+      highlightEpisode(epId);
+    } catch (err) {
+      console.error("Error playing episode:", err);
+    }
+  }
+
+  async function fetchAnimeDetails(animeId) {
+    const title = document.getElementById("anime-title");
+    const episodeList = document.getElementById("episode-list");
+
+    try {
+      let anime;
+      if (provider === 'hiAnime') {
+        const res = await fetch(`https://consumet.8man.me/anime/zoro/info?id=${animeId}`);
+        anime = await res.json();
+      } else {
+        const res = await fetch(`http://localhost:3000/multimovies/info?url=${encodeURIComponent(animeId)}`);
+        anime = await res.json();
+      }
+
+      title.textContent = anime.title;
+      (anime.episodes || []).forEach(ep => {
+        const epCard = document.createElement('div');
+        epCard.className = 'episode-card';
+        epCard.textContent = `Ep ${ep.number || ep.episode}`;
+        epCard.onclick = () => {
+          playEpisode(ep.id);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+        episodeList.appendChild(epCard);
+        episodeCardMap[ep.id] = epCard;
+      });
+
+      if (anime.episodes?.length > 0) {
+        playEpisode(fullEpisodeId || anime.episodes[0].id);
+      }
+    } catch (e) {
+      title.textContent = "⚠️ Failed to load anime info.";
+      console.error(e);
+    }
+  }
+
+  if (animeId) fetchAnimeDetails(animeId);
+</script>
+
+<script src="../FS-V3-Design/script.js"></script>
+<script src="../FS-V3-Design/swiper-bundle.min.js"></script>
+
+</body>
+</html>

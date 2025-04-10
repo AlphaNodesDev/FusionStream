@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FusionStream</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../../appearance/styles.css" />
+  <link rel="stylesheet" href="../../../appearance/swiper-bundle.min.css" />
+  <link rel="shortcut icon" href="../icons/logo2.png" type="image/x-icon" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: sans-serif;
+    }
+
+    body {
+      background: black;
+      overflow: hidden;
+    }
+
+    video {
+      width: 100%;
+      height: calc(100vh - 120px);
+      margin-top: 60px;
+      margin-bottom: 60px;
+      display: block;
+      object-fit: contain;
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 10;
+    }
+
+    #toggleSidebar,
+    .control {
+      position: absolute;
+      z-index: 2;
+      background: rgba(179, 255, 179, 0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 255, 0, 0.4);
+      border-radius: 10px;
+      padding: 10px 16px;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #toggleSidebar:hover,
+    .control:hover {
+      background: rgba(166, 255, 166, 0.3);
+    }
+
+    #qualitySelector {
+      top: 80px;
+      left: 20px;
+    }
+
+    #subtitleSelector {
+      top: 130px;
+      left: 20px;
+    }
+
+    #toggleSidebar {
+      top: 80px;
+      right: 20px;
+    }
+
+    select.control {
+      padding: 10px;
+      font-weight: normal;
+      background-color: rgba(176, 255, 176, 0.2);
+      color: black;
+      border: 1px solid rgba(0, 255, 0, 0.4);
+      border-radius: 8px;
+      appearance: none;
+    }
+
+    #sidebar {
+      position: absolute;
+      top: 80px;
+      right: -300px;
+      width: 300px;
+      height: 100%;
+      backdrop-filter: blur(12px);
+      transition: right 0.3s ease;
+      padding: 20px;
+      overflow-y: auto;
+      z-index: 1;
+    }
+
+    #sidebar.open {
+      right: 0;
+    }
+
+    .episode {
+      margin-bottom: 10px;
+      padding: 10px;
+      background: rgba(209, 255, 209, 0.15);
+      border-radius: 8px;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .episode:hover {
+      background: rgba(179, 255, 179, 0.3);
+    }
+
+    video::cue {
+      background: rgba(183, 253, 183, 0.3);
+      color: black;
+      font-weight: bold;
+      font-size: 16px;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    label {
+      color: #00ff00;
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .video-controls {
+      position: fixed;
+      top: 80%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .video-controls button {
+      background: rgba(0, 255, 0, 0.2);
+      border: none;
+      padding: 8px 12px;
+      color: black;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .video-controls button:hover {
+      background: rgba(0, 255, 0, 0.35);
+    }
+
+    #netSpeed {
+      color: #00ff00;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    #vlcOverlay {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  width: 100%;
+  height: calc(100vh - 120px);
+  background: black;
+  color: #00ff00;
+  font-family: monospace;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 5;
+  transition: opacity 0.5s ease;
+}
+
+.vlcSpinner {
+  width: 40px;
+  height: 40px;
+  border: 5px solid #00ff00;
+  border-top: 5px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+#vlcOverlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+  </style>
+</head>
+
+<body>
+  <div id="custom-titlebar">
+    <div class="title">
+      <a href="index.html" class="logo"><span>Fusion</span> Stream</a>
+    </div>
+    <div id="controls">
+      <button id="back">←</button>
+      <button id="minimize">_</button>
+      <button id="close">×</button>
+    </div>
+  </div>
+
+  <header>
+    <div class="nav container">
+      <div class="navbar">
+        <a href="index.html" class="nav-link nav-active"><i class='bx bx-home'></i><span>Home</span></a>
+        <a href="extentions.html" class="nav-link"><i class='bx bx-extension'></i><span>Extensions</span></a>
+        <a href="settings.html" class="nav-link"><i class='bx bx-cog'></i><span>Settings</span></a>
+      </div>
+    </div>
+  </header>
+  <video id="video" controls crossorigin="anonymous"></video>
+  <div id="vlcOverlay" class="hidden">
+    <div class="vlcSpinner"></div>
+    <span>Loading stream...</span>
+  </div>
+  
+
+  <div id="toggleSidebar">📺 Episodes</div>
+  <select id="qualitySelector" class="control"></select>
+  <select id="subtitleSelector" class="control"></select>
+  <div id="sidebar"></div>
+
+  <div id="videoControls" class="video-controls">
+    <button id="rewind">⏪ 10s</button>
+    <button id="forward">⏩ 10s</button>
+    <button id="lockToggle" hidden>🔒 Lock</button>
+    <span id="netSpeed">🔄 Loading speed...</span>
+    <button id="playOnVLC">📽️ Play on VLC</button>
+
+  </div>
+
+  <script>
+
+document.getElementById("playOnVLC").addEventListener("click", async () => {
+  const streamUrl = currentHls?.url || currentHls?.loadSource || "";
+  if (!streamUrl) return alert("No stream URL found!");
+
+  video.pause();
+
+  // Get selected subtitle
+  const subtitleURL = subtitleSelector?.value || null;
+
+  await fetch("http://localhost:3000/play-vlc", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ 
+      url: streamUrl,
+      subtitle: subtitleURL
+    })
+  }).then(res => {
+    if (!res.ok) throw new Error("VLC launch failed.");
+    alert("🎉 VLC launched!");
+  }).catch(err => {
+    alert("❌ Failed to play in VLC: " + err.message);
+  });
+});
+
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentEpisodeId = urlParams.get("episodeId");
+    const provider = urlParams.get("provider");
+
+    const video = document.getElementById("video");
+    const sidebar = document.getElementById("sidebar");
+    const toggleSidebar = document.getElementById("toggleSidebar");
+    const qualitySelector = document.getElementById("qualitySelector");
+    const subtitleSelector = document.getElementById("subtitleSelector");
+
+    let currentHls = null;
+    let subtitleTracks = [];
+    let speedSamples = [];
+
+    toggleSidebar.addEventListener("click", () => {
+      sidebar.classList.toggle("open");
+    });
+
+    async function fetchEpisodeData(episodeId) {
+      const res = await fetch(`http://localhost:3000/watch?provider=${provider}&episodeId=${encodeURIComponent(episodeId)}`);
+      return await res.json();
+    }
+
+    function clearSubtitles() {
+      const tracks = video.textTracks;
+      for (let i = 0; i < tracks.length; i++) tracks[i].mode = "disabled";
+      const toRemove = Array.from(video.querySelectorAll("track"));
+      toRemove.forEach(track => video.removeChild(track));
+    }
+
+    function attachSubtitle(url, language = "en") {
+      clearSubtitles();
+      const track = document.createElement("track");
+      track.src = url;
+      track.kind = "subtitles";
+      track.label = language;
+      track.srclang = language.slice(0, 2).toLowerCase();
+      track.default = true;
+      video.appendChild(track);
+      track.addEventListener("load", () => {
+        const textTracks = video.textTracks;
+        for (let i = 0; i < textTracks.length; i++) {
+          textTracks[i].mode = "showing";
+        }
+      });
+    }
+
+    async function playEpisode(episodeId) {
+      const overlay = document.getElementById("vlcOverlay");
+      overlay.classList.remove("hidden"); // Show VLC-style overlay
+      try {
+        const data = await fetchEpisodeData(episodeId);
+        const source = data.sources?.[0]?.url;
+        if (!source) throw new Error("No source found");
+
+        if (currentHls) {
+          currentHls.destroy();
+          currentHls = null;
+        }
+
+        const hls = new Hls();
+        hls.loadSource(source);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function () {
+          video.play();
+          overlay.classList.add("hidden"); 
+          qualitySelector.innerHTML = "";
+          hls.levels.forEach((level, i) => {
+            const option = document.createElement("option");
+            option.value = i;
+            option.text = `${level.height}p`;
+            qualitySelector.appendChild(option);
+          });
+          qualitySelector.onchange = () => {
+            hls.currentLevel = parseInt(qualitySelector.value);
+          };
+        });
+
+        // Download speed tracking
+        hls.on(Hls.Events.FRAG_LOADED, function (event, data) {
+          const duration = data.stats.tload - data.stats.trequest;
+          const size = data.stats.total;
+          if (duration > 0) {
+            const speed = ((size * 8) / duration / 1000).toFixed(2);
+            speedSamples.push(Number(speed));
+            if (speedSamples.length > 5) speedSamples.shift();
+            const avg = (speedSamples.reduce((a, b) => a + b, 0) / speedSamples.length).toFixed(2);
+            document.getElementById("netSpeed").textContent = `📶 ${avg} Mbps`;
+          }
+        });
+
+        currentHls = hls;
+
+        // Subtitles
+        subtitleSelector.innerHTML = "";
+        subtitleTracks = data.subtitles || [];
+        subtitleTracks.forEach((sub, index) => {
+          const opt = document.createElement("option");
+          opt.value = sub.url;
+          opt.textContent = sub.language || sub.lang || `Lang ${index + 1}`;
+          subtitleSelector.appendChild(opt);
+        });
+
+        subtitleSelector.onchange = () => {
+          const selected = subtitleSelector.selectedOptions[0];
+          attachSubtitle(selected.value, selected.textContent);
+        };
+
+        if (subtitleTracks.length > 0) {
+          const first = subtitleTracks[0];
+          subtitleSelector.value = first.url;
+          attachSubtitle(first.url, first.language || first.lang || "en");
+        }
+
+      } catch (err) {
+        alert("❌ Failed to load video: " + err.message);
+      }
+    }
+
+    playEpisode(currentEpisodeId);
+
+    async function loadEpisodeList() {
+      const infoRes = await fetch(`http://localhost:3000/info?provider=${provider}&id=${encodeURIComponent(currentEpisodeId.split("$")[0])}`);
+      const info = await infoRes.json();
+      info.episodes.forEach((ep) => {
+        const div = document.createElement("div");
+        div.className = "episode";
+        div.textContent = `Ep ${ep.number}: ${ep.title}`;
+        div.onclick = () => playEpisode(ep.id);
+        sidebar.appendChild(div);
+      });
+    }
+
+    loadEpisodeList();
+
+    // Custom Subtitle Styles from localStorage
+    const subtitleStyles = JSON.parse(localStorage.getItem("subtitleStyles")) || {
+      color: "#ffffff",
+      background: "transparent",
+      fontSize: "16px",
+      fontWeight: "bold"
+    };
+
+    const cueStyle = `
+      video::cue {
+        background: ${subtitleStyles.background};
+        color: ${subtitleStyles.color};
+        font-weight: ${subtitleStyles.fontWeight};
+        font-size: ${subtitleStyles.fontSize};
+        padding: 2px 6px;
+        border-radius: 6px;
+      }
+    `;
+
+    const styleTag = document.createElement("style");
+    styleTag.innerHTML = cueStyle;
+    document.head.appendChild(styleTag);
+
+    // Video Controls
+    document.getElementById("rewind").onclick = () => video.currentTime -= 10;
+    document.getElementById("forward").onclick = () => video.currentTime += 10;
+
+    const lockToggle = document.getElementById("lockToggle");
+    lockToggle.onclick = () => {
+      document.body.classList.toggle("locked");
+      lockToggle.textContent = document.body.classList.contains("locked") ? "🔓 Unlock" : "🔒 Lock";
+    };
+
+    // Draggable Controls
+    const dragElement = (element) => {
+      let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      element.onmousedown = function (e) {
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+      };
+      function elementDrag(e) {
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        element.style.top = (element.offsetTop - pos2) + "px";
+        element.style.left = (element.offsetLeft - pos1) + "px";
+      }
+      function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+      }
+    };
+    dragElement(document.getElementById("videoControls"));
+  </script>
+
+  <script src="../js/renderer.js"></script>
+</body>
+</html>

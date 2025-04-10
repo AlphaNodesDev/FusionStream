@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FusionStream</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../../appearance/styles.css" />
+  <link rel="stylesheet" href="../../../appearance/swiper-bundle.min.css" />
+  <link rel="shortcut icon" href="../icons/logo2.png" type="image/x-icon" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+
+
+
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+ 
+</head>
+<body>
+  <div id="custom-titlebar">
+    <div class="title">   <a href="index.html" class="logo"><span>Fusion</span> Stream</a>
+    </div>
+    <div id="controls">
+      <button id="back">←</button>
+      <button id="minimize">_</button>
+      <button id="close">×</button>
+    </div>
+  
+
+
+  </div>
+  <section class="container subtitle-settings" style="margin-top: 100px;">
+    <h2>Subtitle Settings</h2>
+  
+    <label for="subtitlePreset">Choose a Subtitle Style:</label>
+    <select id="subtitlePreset">
+      <option value="default">Default (White, No Background)</option>
+      <option value="green-glow">Green Glow</option>
+      <option value="dark-box">Dark Box</option>
+      <option value="yellow-highlight">Yellow Highlight</option>
+      <option value="minimal-light">Minimal Light</option>
+    </select>
+  
+    <div class="subtitle-preview" id="subtitlePreview">This is a subtitle preview</div>
+  
+    <button onclick="saveSubtitleStyle()">💾 Save Style</button>
+  </section>
+  
+  <style>
+    .subtitle-settings {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 500px;
+  margin: auto;
+  color: white;
+}
+
+.subtitle-settings label,
+.subtitle-settings select {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.subtitle-preview {
+  margin: 20px 0;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  text-align: center;
+  font-weight: bold;
+  transition: all 0.3s;
+  background: #00000030;
+  color: white;
+}
+
+/* Preset Preview Styles */
+.preview-default {
+  background: transparent;
+  color: white;
+}
+
+.preview-green-glow {
+  background: rgba(0, 255, 0, 0.1);
+  color: #00ff00;
+  text-shadow: 0 0 5px #00ff00;
+}
+
+.preview-dark-box {
+  background: rgba(0, 0, 0, 0.7);
+  color: #f0f0f0;
+}
+
+.preview-yellow-highlight {
+  background: rgba(255, 255, 0, 0.2);
+  color: #222;
+}
+
+.preview-minimal-light {
+  background: transparent;
+  color: #ccc;
+  font-weight: normal;
+  font-style: italic;
+}
+
+/* Subtitle Settings Section */
+.subtitle-settings {
+  background: rgba(255, 255, 255, 0.1); /* Slight transparent background */
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 600px;
+  margin: 100px auto 50px auto;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px); /* Soft blur effect for a modern look */
+  -webkit-backdrop-filter: blur(8px); /* Safari support */
+}
+
+/* Title Styling */
+.subtitle-settings h2 {
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Label Styling */
+.subtitle-settings label {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: block;
+}
+
+/* Dropdown (select element) */
+#subtitlePreset {
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3); /* Light border */
+  border-radius: 8px;
+  background: #3d3b3b; /* Dark background */
+  color: white; /* White text color */
+  width: 100%;
+  max-width: 300px;
+  transition: background 0.3s, box-shadow 0.3s;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+/* Focused state for dropdown */
+#subtitlePreset:focus {
+  background: #222; /* Darker background on focus */
+  box-shadow: 0 0 5px #00c3ff88; /* Blue glow on focus */
+  outline: none;
+}
+
+
+/* Subtitle Preview */
+.subtitle-preview {
+  margin: 20px 0;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 18px;
+  text-align: center;
+  font-weight: bold;
+  background: #00000030; /* Semi-transparent black background */
+  color: white;
+  transition: all 0.3s;
+}
+
+/* Preset Preview Styles */
+.preview-default {
+  background: transparent;
+  color: white;
+}
+
+.preview-green-glow {
+  background: rgba(0, 255, 0, 0.1);
+  color: #00ff00;
+  text-shadow: 0 0 5px #00ff00;
+}
+
+.preview-dark-box {
+  background: rgba(0, 0, 0, 0.7);
+  color: #f0f0f0;
+}
+
+.preview-yellow-highlight {
+  background: rgba(255, 255, 0, 0.2);
+  color: #222;
+}
+
+.preview-minimal-light {
+  background: transparent;
+  color: #ccc;
+  font-weight: normal;
+  font-style: italic;
+}
+
+/* Save Button */
+.subtitle-settings button {
+  padding: 12px 20px;
+  font-size: 16px;
+  background-color: #0078d4; /* Windows Blue */
+  color: #222;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: 100%;
+  max-width: 200px;
+  margin-top: 20px;
+}
+
+/* Save Button Hover */
+.subtitle-settings button:hover {
+  background-color: #005a9e;
+}
+
+
+
+  </style>
+</div>
+  <!-- Header -->
+  <header>
+    <div class="nav container">
+
+    
+
+      <!-- Nav Links -->
+      <div class="navbar">
+        <a href="index.html" class="nav-link"><i class='bx bx-home'></i><span>Home</span></a>
+        <a href="extentions.html" class="nav-link nav-active"><i class='bx bx-extension'></i><span>Extensions</span></a>
+        <a href="" class="nav-link"><i class='bx bx-cog'></i><span>Settings</span></a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Home Section
+  <section class="home container" id="home">
+    <img src="img/home-background.png" alt="Background" class="home-img" />
+    <div class="home-text">
+      <h1 class="home-title">Hitman's Wife's <br> bodyguard</h1>
+      <p>Releasing 10 April</p>
+      <a href="#" class="watch-btn"><i class='bx bx-right-arrow'></i><span>Watch the trailer</span></a>
+    </div>
+  </section> -->
+
+  <!-- Dynamic Content Area -->
+  <section class="movies container" id="movies">
+
+
+  <div id="catalog" class="movies-content movie-grid"></div>
+  </section>
+
+  <!-- Error Component (Optional) -->
+  <div class="copyright">
+    <center>
+      <div class="win-error">
+        <div class="win-error-header">
+          ❌ Error - AlphaNodes Server
+          <button class="win-error-close" onclick="this.closest('.win-error').remove()">×</button>
+        </div>
+        <div class="win-error-body">
+          <p><strong>Error Code:</strong> <code>ERR503-REV-HIGHLOAD</code></p>
+          <p><strong>Message:</strong> Server is temporarily <span style="color: darkred;">down</span>.</p>
+          <pre>
+[2025-04-08 14:23:47] ServerOverloadException: Node limit exceeded
+at ServerHandler.connect(ServerHandler.java:142)
+at Main.initialize(Main.java:87)
+at App.main(App.java:19)
+          </pre>
+        </div>
+      </div>
+    </center>
+  </div>
+  <script>
+    const subtitlePresets = {
+      "default": {
+        color: "#ffffff",
+        background: "transparent",
+        fontSize: "30px",
+        fontWeight: "bold"
+      },
+      "green-glow": {
+        color: "#00ff00",
+        background: "rgba(0,255,0,0.1)",
+        fontSize: "30px",
+        fontWeight: "bold"
+      },
+      "dark-box": {
+        color: "#f0f0f0",
+        background: "rgba(0,0,0,0.7)",
+        fontSize: "30px",
+        fontWeight: "bold"
+      },
+      "yellow-highlight": {
+        color: "#222222",
+        background: "rgba(255,255,0,0.2)",
+        fontSize: "30px",
+        fontWeight: "bold"
+      },
+      "minimal-light": {
+        color: "#cccccc",
+        background: "transparent",
+        fontSize: "30px",
+        fontWeight: "normal"
+      }
+    };
+  
+    const presetSelector = document.getElementById("subtitlePreset");
+    const previewBox = document.getElementById("subtitlePreview");
+  
+    presetSelector.addEventListener("change", () => {
+      const selected = presetSelector.value;
+      previewBox.className = "subtitle-preview preview-" + selected;
+    });
+  
+    function saveSubtitleStyle() {
+      const preset = presetSelector.value;
+      const style = subtitlePresets[preset];
+      localStorage.setItem("subtitleStyles", JSON.stringify(style));
+      alert("✅ Subtitle style saved: " + preset);
+    }
+  
+    // Set default preview on load
+    window.onload = () => {
+      const savedStyle = localStorage.getItem("subtitleStyles");
+      if (savedStyle) {
+        const preset = Object.keys(subtitlePresets).find(p =>
+          JSON.stringify(subtitlePresets[p]) === savedStyle
+        );
+        if (preset) {
+          presetSelector.value = preset;
+          previewBox.className = "subtitle-preview preview-" + preset;
+        }
+      } else {
+        previewBox.className = "subtitle-preview preview-default";
+      }
+    };
+  </script>
+  
+  
+  <!-- Scripts -->
+  <script src="../js/swiper-bundle.min.js"></script>
+  <script src="../js/script.js"></script>
+  <script src="../js/renderer.js"></script>
+ 
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fusion Stream Web interface</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="./assets/styles.css" />
+  <link rel="stylesheet" href="./assets/swiper-bundle.min.css" />
+  <link rel="shortcut icon" href="./assets/logo2.png" type="image/x-icon" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+ 
+</head>
+<body>
+
+<!-- Update Modal -->
+<div id="updateModal" class="modal">
+  <div class="modal-content win-style">
+    <span class="close-button" id="closeModal">×</span>
+    <h2>Update Available</h2>
+    <p>Current Version: <span id="currentVersion"></span></p>
+    <p>New Version: <span id="newVersion"></span></p>
+    <h4>Changelog:</h4>
+    <pre id="changelogContent">Loading...</pre>
+    <a id="downloadUpdate" class="update-link" href="#">Download Update</a>
+  </div>
+</div>
+
+<!-- News Modal -->
+<div id="newsModal" class="modal">
+  <div class="modal-content win-style">
+    <span class="close-button" id="closeNews">×</span>
+    <h2 id="newsTitle">News</h2>
+    <p id="newsMessage">Latest announcement from FusionStream.</p>
+  </div>
+</div>
+
+
+  <div id="custom-titlebar">
+    <div class="title">   <a href="index.html" class="logo"><span>Fusion</span> Stream</a>
+    </div>
+    <div id="controls">
+      <button id="back">←</button>
+      <button id="minimize">_</button>
+      <button id="close">×</button>
+    </div>
+  
+
+  </div>
+  
+</div>
+  <!-- Header -->
+  <header>
+    <div class="nav container">
+
+      <!-- Search Input + Provider -->
+      <div class="selector-wrap">
+        <select id="providerSelect">
+          <option value="hiAnime">V1 (Anime)</option>
+       <!--   <option value="Kisskh">Kisskh</option>-->
+          <option value="multiMovies">V2 (Tv,Movies,Anime)</option>
+        </select>
+    
+
+          <div class="search-box">
+        <input type="search" id="searchInput" placeholder="search Movies">
+        <i class='bx bx-search' id="search-button" ></i>
+          </div>
+      </div>
+
+      <!-- Nav Links -->
+      <div class="navbar">
+        <a href="index.html" class="nav-link nav-active"><i class='bx bx-home'></i><span>Home</span></a>
+        <a href="extentions.html" class="nav-link"><i class='bx bx-extension'></i><span>Extensions</span></a>
+        <a href="settings.html" class="nav-link"><i class='bx bx-cog'></i><span>Settings</span></a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Home Section
+  <section class="home container" id="home">
+    <img src="img/home-background.png" alt="Background" class="home-img" />
+    <div class="home-text">
+      <h1 class="home-title">Hitman's Wife's <br> bodyguard</h1>
+      <p>Releasing 10 April</p>
+      <a href="#" class="watch-btn"><i class='bx bx-right-arrow'></i><span>Watch the trailer</span></a>
+    </div>
+  </section> -->
+
+  <!-- Dynamic Content Area -->
+  <section class="movies container" id="movies">
+    <div class="heading"><h2 class="heading-title">Search Results</h2></div>
+    <div id="searchResults" class="movies-content movie-grid"></div>
+    
+
+  <div id="catalog" class="movies-content movie-grid"></div>
+  </section>
+
+  <!-- Error Component (Optional) -->
+  <div class="copyright">
+    <center>
+      <div class="win-error">
+        <div class="win-error-header">
+          ❌ Error - AlphaNodes Server
+          <button class="win-error-close" onclick="this.closest('.win-error').remove()">×</button>
+        </div>
+        <div class="win-error-body">
+          <p><strong>Error Code:</strong> <code>ERR503-REV-HIGHLOAD</code></p>
+          <p><strong>Message:</strong> Server is temporarily <span style="color: darkred;">down</span>.</p>
+          <pre>
+[2025-04-08 14:23:47] ServerOverloadException: Node limit exceeded
+at ServerHandler.connect(ServerHandler.java:142)
+at Main.initialize(Main.java:87)
+at App.main(App.java:19)
+          </pre>
+        </div>
+      </div>
+    </center>
+  </div>
+
+  <!-- Scripts -->
+  <script src="./assets/swiper-bundle.min.js"></script>
+  <script src="./assets/script.js"></script>
+
+  <!-- App Logic -->
+  <script type="module">
+    import { hiAnimeCatalog, fetchHiAnimeCatalog, searchHiAnime } from './providers/hiAnime/functions.js';
+    import { kisskhCatalog, fetchKisskhCatalog, searchKisskh } from './providers/Kisskh/functions.js';
+    import { multiMoviesCatalog, fetchMultiMoviesCatalog, searchMultiMovies } from './providers/multimovies/functions.js';
+
+    const providerSelect = document.getElementById('providerSelect');
+    const searchBtn = document.getElementById('search-button');
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    const catalogDiv = document.getElementById('catalog');
+
+    const savedProvider = localStorage.getItem('selectedProvider') || 'hiAnime';
+    providerSelect.value = savedProvider;
+
+    providerSelect.addEventListener('change', async () => {
+  const provider = providerSelect.value;
+  localStorage.setItem('selectedProvider', provider);
+
+  // Check if user has typed something
+  const query = searchInput.value.trim();
+
+  if (query) {
+    // If there's a query, re-run search
+    const results = await search(provider, query);
+    renderResults(results, provider, searchResults);
+  } else {
+    // Otherwise just reload the default catalog
+    searchResults.innerHTML = '';
+    await loadCatalog(provider);
+  }
+});
+
+
+    searchBtn.addEventListener('click', async () => {
+      const query = searchInput.value.trim();
+      const provider = providerSelect.value;
+      if (query) {
+        const results = await search(provider, query);
+        renderResults(results, provider, searchResults);
+      }
+    });
+
+    async function search(provider, query) {
+      if (provider === 'hiAnime') return await searchHiAnime(query);
+      else if (provider === 'Kisskh') return await searchKisskh(query);
+      else if (provider === 'multiMovies') return await searchMultiMovies(query);
+      return [];
+    }
+    searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    searchBtn.click();
+  }
+});
+    function renderResults(results, provider, container) {
+      container.innerHTML = '';
+      if (!results.length) {
+        container.innerHTML = '<p>No results found.</p>';
+        return;
+      }
+
+      results.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'movie-card';
+        card.innerHTML = `<img src="${item.image}"><p>${item.title}</p>`;
+        card.onclick = () => {
+          localStorage.setItem('selectedItem', JSON.stringify(item));
+          localStorage.setItem('selectedProvider', provider);
+          window.location.href = 'info.html';
+        };
+        container.appendChild(card);
+      });
+    }
+
+    async function loadCatalog(provider) {
+      catalogDiv.innerHTML = '';
+      let catalog = [], fetchFn;
+
+      if (provider === 'hiAnime') {
+        catalog = hiAnimeCatalog;
+        fetchFn = fetchHiAnimeCatalog;
+      } else if (provider === 'Kisskh') {
+        catalog = kisskhCatalog;
+        fetchFn = fetchKisskhCatalog;
+      } else if (provider === 'multiMovies') {
+        catalog = multiMoviesCatalog;
+        fetchFn = fetchMultiMoviesCatalog;
+      }
+
+      for (const section of catalog) {
+        const sectionData = await fetchFn(section.filter);
+        const sectionHeading = document.createElement('h3');
+        sectionHeading.textContent = section.title;
+        catalogDiv.appendChild(sectionHeading);
+
+        const sectionContainer = document.createElement('div');
+        sectionContainer.className = 'movie-grid';
+
+        sectionData.results.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'movie-card';
+          card.innerHTML = `<img src="${item.image}"><p>${item.title}</p>`;
+          card.onclick = () => {
+            localStorage.setItem('selectedItem', JSON.stringify(item));
+            localStorage.setItem('selectedProvider', provider);
+            window.location.href = 'info.html';
+          };
+          sectionContainer.appendChild(card);
+        });
+
+        catalogDiv.appendChild(sectionContainer);
+      }
+    }
+
+    // Initial load
+    loadCatalog(savedProvider);
+
+    
+  </script>
+
+<script src="./assets/renderer.js"></script>
+<script src="./assets/gethub.js"></script>
+</body>
+</html>

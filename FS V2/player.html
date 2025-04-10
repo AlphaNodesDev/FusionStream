@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Anime Player</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #111;
+      color: #fff;
+    }
+
+    .anime-details {
+      margin-bottom: 20px;
+    }
+
+    .anime-image {
+      max-width: 200px;
+      border-radius: 10px;
+    }
+
+    video {
+      width: 100%;
+      max-width: 900px;
+      margin: 20px 0;
+      border-radius: 10px;
+    }
+
+    .episode-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .episode-card {
+      background: #222;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .episode-card:hover {
+      background: #444;
+    }
+
+    .episode-card.active {
+      background-color: #007bff;
+      color: #fff;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="anime-details" id="anime-details">
+    <h1>Loading...</h1>
+  </div>
+
+<!-- Current Episode Title -->
+<div id="current-episode-title" style="font-size: 1.2em; font-weight: bold; margin-bottom: 10px;"></div>
+
+<!-- Player -->
+<video id="anime-player" controls poster=""></video>
+
+  <!-- Episodes -->
+  <div class="episode-list" id="episode-list"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script type="module">
+    import modflix from './modflix.json' assert { type: 'json' };
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const episodeIdFromUrl = urlParams.get('episodeId');
+    const provider = localStorage.getItem('selectedProvider') || 'consumet';
+
+    let providerModule;
+
+    let episodeCardMap = {}; // Keep refs to all cards
+
+    async function loadProvider(name) {
+      const { [name]: providerInfo } = modflix;
+      const { consumet } = await import(`./providers/${name}.js`);
+      return consumet(providerInfo.url);
+    }
+
+    function highlightEpisode(episodeId) {
+      Object.values(episodeCardMap).forEach(card => card.classList.remove('active'));
+      if (episodeCardMap[episodeId]) {
+        episodeCardMap[episodeId].classList.add('active');
+      }
+    }
+    async function playEpisode(epId, { autoplay = true, posterOnly = false } = {}) {
+  const video = document.getElementById('anime-player');
+  video.innerHTML = '';
+
+  try {
+    const card = episodeCardMap[epId];
+    document.getElementById('current-episode-title').textContent = card?.textContent || '';
+
+    if (posterOnly) {
+      highlightEpisode(epId);
+      return;
+    }
+
+    const watchData = await providerModule.getWatch(epId + '$sub');
+    const streamUrl = watchData.sources?.[0]?.url;
+    const subtitles = watchData.subtitles || [];
+
+    subtitles.forEach(sub => {
+      if (!sub.url || sub.lang === 'thumbnails') return;
+      const track = document.createElement('track');
+      track.kind = 'subtitles';
+      track.label = sub.lang;
+      track.srclang = sub.lang.slice(0, 2).toLowerCase();
+      track.src = sub.url;
+      track.default = sub.lang.toLowerCase().includes('english');
+      video.appendChild(track);
+    });
+
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(streamUrl);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        if (autoplay) video.play();
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = streamUrl;
+      if (autoplay) {
+        video.addEventListener('loadedmetadata', () => video.play());
+      }
+    } else {
+      alert('HLS not supported');
+    }
+
+    highlightEpisode(epId);
+  } catch (err) {
+    console.error('Playback error:', err);
+  }
+}
+
+
+    async function fetchAnimeDetails(animeId) {
+      providerModule = await loadProvider(provider);
+      const anime = await providerModule.getInfo(animeId);
+
+      document.getElementById('anime-details').innerHTML = `
+        <h1>${anime.title}</h1>
+  
+      `;
+
+      const list = document.getElementById('episode-list');
+      list.innerHTML = '';
+
+      anime.episodes.forEach(ep => {
+        const btn = document.createElement('div');
+        btn.className = 'episode-card';
+        btn.textContent = `Episode ${ep.number}: ${ep.title}`;
+        btn.onclick = () => playEpisode(ep.id, { autoplay: true });
+        list.appendChild(btn);
+        episodeCardMap[ep.id] = btn;
+      });
+
+      const firstEpisodeId = anime.episodes?.[0]?.id;
+
+      // If URL has episodeId, play that; otherwise, show Episode 1 paused
+      if (episodeIdFromUrl) {
+        playEpisode(episodeIdFromUrl, { autoplay: true });
+      } else if (firstEpisodeId) {
+        playEpisode(firstEpisodeId, { autoplay: false });
+      }
+    }
+
+    if (episodeIdFromUrl) {
+      const animeId = episodeIdFromUrl.split('$')[0];
+      fetchAnimeDetails(animeId);
+    } else {
+      document.getElementById('anime-details').innerHTML = '<h1>Error: No Episode ID provided.</h1>';
+    }
+  </script>
+</body>
+</html>

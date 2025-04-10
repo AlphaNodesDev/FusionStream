@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FusionStream</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../../appearance/styles.css" />
+  <link rel="stylesheet" href="../../../appearance/swiper-bundle.min.css" />
+  <link rel="shortcut icon" href="../icons/logo2.png" type="image/x-icon" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+
+  <style>
+    /* Minimal card fallback in case styles.css is missing */
+    .card {
+      background: #222;
+      border-radius: 8px;
+      padding: 10px;
+      width: 150px;
+      margin: 10px;
+      display: inline-block;
+      vertical-align: top;
+      text-align: center;
+    }
+
+    .card img {
+      width: 100%;
+      border-radius: 4px;
+    }
+
+    .card-title {
+      margin-top: 5px;
+      font-size: 14px;
+    }
+    @keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+  </style>
+</head>
+<body>
+  <style>
+  
+  </style>
+  
+  <div id="popup-container"></div>
+  
+<!-- Update Modal -->
+<div id="updateModal" class="modal">
+  <div class="modal-content win-style">
+    <span class="close-button" id="closeModal">×</span>
+    <h2>Update Available</h2>
+    <p>Current Version: <span id="currentVersion"></span></p>
+    <p>New Version: <span id="newVersion"></span></p>
+    <h4>Changelog:</h4>
+    <pre id="changelogContent">Loading...</pre>
+    <a id="downloadUpdate" class="update-link" href="#">Download Update</a>
+  </div>
+</div>
+
+<!-- News Modal -->
+<div id="newsModal" class="modal">
+  <div class="modal-content win-style">
+    <span class="close-button" id="closeNews">×</span>
+    <h2 id="newsTitle">News</h2>
+    <p id="newsMessage">Latest announcement from FusionStream.</p>
+  </div>
+</div>
+
+  <!-- Titlebar -->
+  <div id="custom-titlebar">
+    <div class="title">
+      <a href="index.html" class="logo"><span>Fusion</span> Stream</a>
+    </div>
+    <div id="controls">
+      <button id="back">←</button>
+      <button id="minimize">_</button>
+      <button id="close">×</button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="nav container">
+      <div class="selector-wrap">
+        <select id="providerSelect"></select>
+        <div class="search-box">
+          <input type="text" placeholder="Search for anime/movies..." id="searchInput"/>
+          <i class='bx bx-search' id="search-button"></i>
+        </div>
+      </div>
+
+      <div class="navbar">
+        <a href="index.html" class="nav-link nav-active"><i class='bx bx-home'></i><span>Home</span></a>
+        <a href="extentions.html" class="nav-link"><i class='bx bx-extension'></i><span>Extensions</span></a>
+        <a href="settings.html" class="nav-link"><i class='bx bx-cog'></i><span>Settings</span></a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Catalog Display -->
+   <div class="copyright"></div>
+   <section class="movies container" id="catalogSection">
+    <div id="loader" style="display: none; width: 100%; text-align: center; padding: 2rem;">
+      <div style="
+        width: 40px;
+        height: 40px;
+        border: 5px solid #00ff00;
+        border-top: 5px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: auto;
+      "></div>
+      <p style="margin-top: 10px; color: gray;">Loading...</p>
+    </div>
+  
+    <div id="catalogContainer" class="movies-content movie-grid"></div>
+  </section>
+  
+    
+  </section>
+  <div class="copyright"></div>
+  <!-- Core JS Logic (your existing backend fetching/search logic) -->
+  <script>
+    const providerSelect = document.getElementById('providerSelect');
+    const catalogContainer = document.getElementById('catalogContainer');
+    const searchInput = document.getElementById('searchInput');
+
+    searchInput.addEventListener('keydown', async (e) => {
+      if (e.key === 'Enter') {
+        const query = searchInput.value.trim();
+        const provider = providerSelect.value;
+        if (!query || !provider) return;
+
+        const res = await fetch(`http://localhost:3000/search?provider=${provider}&q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+
+        catalogContainer.innerHTML = '';
+
+        if (data.results?.length) {
+          renderSection(`Search Results for "${query}"`, data.results);
+        } else {
+          catalogContainer.innerHTML = `<p>No results found for "${query}".</p>`;
+        }
+      }
+    });
+
+    async function loadProviders() {
+  try {
+    const res = await fetch('http://localhost:3000/providers');
+    const data = await res.json();
+    
+    let hasEnabledProvider = false;
+    providerSelect.innerHTML = '';
+
+    for (const key in data) {
+      if (data[key].enable) {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = data[key].displayname;
+        providerSelect.appendChild(opt);
+        hasEnabledProvider = true;
+      }
+    }
+
+    if (hasEnabledProvider) {
+      // Set saved provider if it exists and is enabled
+      const savedProvider = localStorage.getItem('selectedProvider');
+      if (savedProvider && data[savedProvider]?.enable) {
+        providerSelect.value = savedProvider;
+      }
+
+      loadCatalog();
+    } else {
+      showFallbackMessage();
+    }
+  } catch (err) {
+    console.error("Failed to load providers:", err);
+    showFallbackMessage();
+  }
+}
+
+providerSelect.addEventListener('change', () => {
+  const selectedProvider = providerSelect.value;
+  localStorage.setItem('selectedProvider', selectedProvider); // Save to localStorage
+  loadCatalog(); // Refresh catalog
+});
+
+
+function showFallbackMessage() {
+  catalogContainer.innerHTML = `
+    <div style="
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      height: 60vh;
+      color: var(--text-color);
+    ">
+      <img src="./assets/down.gif" alt="Server Down" style="max-width: 200px; margin-bottom: 1rem;" />
+      <h2>All servers are currently offline.</h2>
+      <p style="color: gray;">Please try again later.</p>
+    </div>
+  `;
+}
+
+
+
+async function loadCatalog() {
+  const selectedProvider = providerSelect.value;
+  if (!selectedProvider) return;
+
+  const loader = document.getElementById('loader');
+  const catalogContainer = document.getElementById('catalogContainer');
+
+  loader.style.display = 'block'; // Show loader
+  catalogContainer.innerHTML = ''; // Then clear content
+
+  try {
+    const res = await fetch(`http://localhost:3000/catalog?provider=${selectedProvider}`);
+    const data = await res.json();
+
+    for (const sectionName in data) {
+      const items = data[sectionName];
+      renderSection(sectionName, items);
+    }
+
+  } catch (err) {
+    console.error("Catalog load failed:", err);
+    catalogContainer.innerHTML = '<p style="text-align:center;color:gray;">Failed to load content.</p>';
+  } finally {
+    loader.style.display = 'none'; // Always hide loader
+  }
+}
+
+
+    function renderSection(title, items) {
+      const section = document.createElement('div');
+      const heading = document.createElement('h2');
+      heading.textContent = title.charAt(0).toUpperCase() + title.slice(1);
+      section.appendChild(heading);
+
+      const list = document.createElement('div');
+      list.className = 'movie-grid';
+
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'movie-card';
+        card.innerHTML = `
+          <img src="${item.thumbnail}" alt="${item.title}" />
+          <p class="card-title">${item.title}</p>
+        `;
+
+        card.addEventListener('click', () => {
+          const provider = providerSelect.value;
+          const url = `info.html?provider=${provider}&id=${encodeURIComponent(item.id)}`;
+          window.location.href = url;
+        });
+
+        list.appendChild(card);
+      });
+
+      section.appendChild(list);
+      catalogContainer.appendChild(section);
+    }
+
+    providerSelect.addEventListener('change', loadCatalog);
+    loadProviders();
+  </script>
+
+
+  
+<script src="../js/renderer.js"></script>
+<script src="../js/gethub.js"></script>
+<script src="../js/event.js"></script>
+</body>
+</html>

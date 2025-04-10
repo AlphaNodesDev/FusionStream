@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fusion Stream Web interface</title>
+  <link rel="stylesheet" href="./assets/styles.css" />
+  <link rel="stylesheet" href="./assets/swiper-bundle.min.css" />
+  <link rel="shortcut icon" href="./assets/logo2.png" type="image/x-icon" />
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <style>
+    #episode-buttons button {
+      margin: 6px;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 8px;
+      background-color: rgba(255,255,255,0.15);
+      color: white;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+    
+      
+     
+    }
+    #episode-buttons button:hover {
+      background-color: rgba(255,255,255,0.3);
+    }
+    .glass-overlay {
+  position: absolute;
+  top: 20%;
+  left: 5%;
+  right: 5%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  padding: 2rem;
+  color: white;
+  z-index: 2;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.play-container {
+  position: relative;
+  height: 60vh;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.play-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.5);
+  border-radius: 20px;
+}
+.about-movie {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  padding: 1.5rem;
+  border-radius: 16px;
+  margin-top: 2rem;
+  color: white;
+}
+.play-movie
+{
+  z-index: 999;
+}
+  </style>
+</head>
+<body>
+<header>
+  <div id="custom-titlebar">
+    <div class="title">   <a href="index.html" class="logo"><span>Fusion</span> Stream</a>
+    </div>
+    <div id="controls">
+      <button id="back">←</button>
+      <button id="minimize">_</button>
+      <button id="close">×</button>
+    </div>
+  
+    <script src="./assets/renderer.js"></script>
+
+  </div>
+  <div class="nav container">
+
+
+    <div class="navbar">
+      <a href="./index.html" class="nav-link nav-active"><i class='bx bx-home'></i><span>Home</span></a>
+      <a href="extentions.html" class="nav-link"><i class='bx bx-extension'></i><span>Extensions</span></a>
+      <a href="settings.html" class="nav-link"><i class='bx bx-cog'></i><span>Settings</span></a>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<div class="play-container container">
+  <img id="bg-img" src="play-page/play-background.jpg" alt="play image background" class="play-img">
+  <div class="glass-overlay">
+    <h2 id="movie-title">Title Loading...</h2>
+    <p id="movie-description">Description loading...</p>
+    
+  </div>
+  <div id="episode-buttons" ><p>Loading episodes...</p></div>
+
+</div>
+
+<!-- About Section -->
+<div class="about-movie container" hidden>
+  <h2 id="about-title" hidden>Title Loading...</h2>
+
+</div>
+
+<!-- Script -->
+<script type="module">
+  async function init() {
+    const item = JSON.parse(localStorage.getItem('selectedItem'));
+    const provider = localStorage.getItem('selectedProvider');
+
+    if (!item) {
+      document.getElementById('movie-title').innerText = 'No anime selected.';
+      return;
+    }
+
+    // Set background image and titles
+    const bgImage = item.image || item.thumbnail;
+    if (bgImage) document.getElementById('bg-img').src = bgImage;
+    document.getElementById('movie-title').innerText = item.title;
+    document.getElementById('about-title').innerText = item.title;
+    document.getElementById('movie-description').innerText = item.synopsis || item.description || 'No description available.';
+
+    if (item.type === 'movie') {
+      document.getElementById('episode-buttons').innerHTML = `
+      
+<i class="bx bx-right-arrow play-movie" onclick="window.location.href='player.html?episodeId=${encodeURIComponent(item.link || item.id)}&title=${encodeURIComponent(item.title)}&provider=${provider}'"></i>
+`;
+      return;
+    }
+
+    try {
+      let episodes = [];
+
+      if (provider === 'hiAnime') {
+        const res = await fetch(`https://consumet.8man.me/anime/zoro/info?id=${item.id}`);
+        const data = await res.json();
+        episodes = data.episodes || [];
+
+      } else if (provider === 'Kisskh') {
+        const res = await fetch(`https://kisskh.ovh/api/DramaList/Drama/${item.id}`);
+        const data = await res.json();
+        episodes = data.episodes || [];
+
+      } else if (provider === 'multiMovies') {
+        const res = await fetch(item.id);
+        const html = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        episodes = [];
+
+        const seasons = doc.querySelectorAll('#seasons .se-c');
+        seasons.forEach((season, index) => {
+          const titleNode = season.querySelector('.title')?.cloneNode(true);
+          if (titleNode) {
+            Array.from(titleNode.children).forEach(child => titleNode.removeChild(child));
+          }
+
+          const seasonTitle = titleNode?.textContent?.trim() || `Season ${index + 1}`;
+          const episodeElements = season.querySelectorAll('.episodios > li');
+
+          episodeElements.forEach((epEl) => {
+            const numberText = epEl.querySelector('.numerando')?.textContent?.trim();
+            const episodeNumber = numberText?.split('-')[1]?.trim();
+            const link = epEl.querySelector('a')?.getAttribute('href');
+
+            if (episodeNumber && link) {
+              const title = `${seasonTitle} - Episode ${episodeNumber}`;
+              episodes.push({ title, id: link, number: episodeNumber });
+            }
+          });
+        });
+      }
+
+      renderEpisodes(episodes, provider);
+    } catch (err) {
+      document.getElementById('episode-buttons').innerHTML = `<p>Failed to load episodes.</p>`;
+      console.error(err);
+    }
+  }
+
+  function renderEpisodes(episodes, provider) {
+    if (!episodes.length) {
+      document.getElementById('episode-buttons').innerHTML = '<p>No episodes available.</p>';
+      return;
+    }
+
+    const buttons = episodes.map(ep => {
+      const epNum = ep.number || ep.episode || 'N/A';
+      const epId = encodeURIComponent(ep.id || ep.url || ep.video || epNum);
+      const title = encodeURIComponent(ep.title || '');
+      return `<button onclick="window.location.href='player.html?episodeId=${epId}&title=${title}&provider=${provider}'">Episode ${epNum}</button>`;
+    }).join('');
+
+    document.getElementById('episode-buttons').innerHTML = `<div>${buttons}</div>`;
+  }
+
+  init();
+</script>
+<script src="./assets/swiper-bundle.min.js"></script>
+<script src="./assets/script.js"></script>
+</body>
+</html>

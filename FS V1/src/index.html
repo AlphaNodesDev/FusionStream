@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700;900&family=Sen:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css">
+    <title>Fusion Stream</title>
+</head>
+
+<body>
+
+    <!-- Warning Popup -->
+<div class="warning-popup" id="warningPopup" style="display: none;">
+    <div class="popup-content">
+        <span class="popup-message">This app is under development. <strong>New updates will be released soon.</strong></span>
+        <button class="popup-close-btn" onclick="closePopup()">×</button>
+    </div>
+</div>
+
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="logo-container">
+                <h1 class="logo">Fusion<span class="stream">stream</span></h1>
+            </div>
+<!---
+            <div class="profile-container">
+                <img class="profile-picture" src="img/MH Miyazi.png" alt="MH Miyazi">
+                <div class="profile-text-container">
+                    <span class="profile-text">Profile</span>
+                    <i class="fas fa-caret-down"></i>
+                </div>  -->
+                <div class="toggle">
+                    <i class="fas fa-moon toggle-icon"></i>
+                    <i class="fas fa-sun toggle-icon"></i>
+                    <div class="toggle-ball"></div>
+                </div>
+            </div>
+
+      
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="featured-content" style="background: linear-gradient(to bottom, rgba(0,0,0,0), #151515), url('img/logoimage.jpeg');">
+            <img class="featured-title" src="img/logo.png" alt="Fusion Stream Logo">
+            <p class="featured-desc">Experience seamless streaming and discover content you'll love with Fusion Stream. Browse, watch, and explore endless entertainment!</p>
+
+            <!-- Search Section -->
+            <div class="search-container">
+                <input class="search-input" type="text" id="searchBox" placeholder="Search for movies or shows..." />
+                <button class="search-button" onclick="search()">Search</button>
+
+            </div>
+        </div>
+
+        <!-- Movie List Container -->
+        <div class="movie-list-container">
+      
+            <div class="movie-list-wrapper" id="results">
+                <!-- Filtered results will appear here in rows by website -->
+            </div>
+        </div>
+    </div>
+
+    <div id="movieContainer" style="display: none;">
+        <iframe src="" width="100%" height="500" frameborder="0"></iframe>
+        <button id="backButton">⬅ Back</button>
+    </div>
+
+    <script>
+        // Function to go back to the previous page
+        function goBack() {
+            document.getElementById("movieContainer").style.display = "none";
+            document.getElementById("backButton").style.display = "none";
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const searchBox = document.getElementById("searchBox");
+            const resultsContainer = document.getElementById("results");
+            window.search = async function () {
+    const query = document.getElementById("searchBox").value.trim();
+    console.log("[Search] Query:", query);
+
+    if (!query || typeof query !== "string") {
+        alert("Please enter a valid search term!");
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://localhost:3001/search?q=${query}`);
+        console.log("[Search] Response status:", response.status);
+
+        const data = await response.json();
+        console.log("[Search] Fetched data:", data);
+
+        resultsContainer.innerHTML = "";
+
+        if (data.length === 0) {
+            resultsContainer.innerHTML = "<p>No results found.</p>";
+            return;
+        }
+
+        const groupedResults = groupByWebsite(data);
+        console.log("[Search] Grouped Results:", groupedResults);
+
+        Object.keys(groupedResults).forEach(website => {
+                        const websiteContainer = document.createElement('div');
+                        websiteContainer.classList.add('website-container');
+                        
+                        const websiteTitle = document.createElement('h2');
+                        websiteTitle.textContent = website; // Website name
+                        websiteContainer.appendChild(websiteTitle);
+                        
+                        const movieList = document.createElement('div');
+                        movieList.classList.add('movie-list');
+
+                        // Append each movie item under this website
+                        groupedResults[website].forEach(item => {
+                            const card = document.createElement("div");
+                            card.classList.add("movie-list-item");
+                            card.innerHTML = `
+                                <img class="movie-list-item-img" src="${item.thumbnail}" alt="${item.title}">
+                                <span class="movie-list-item-title">${item.title}</span>
+                                <p class="movie-list-item-desc">${item.description || "Description not available"}</p>
+                                <button class="movie-list-item-button">Watch</button>
+                            `;
+                            card.addEventListener("click", () => {
+                                const formattedTitle = item.title
+                                    .replace(/\s+/g, '-')
+                                    .replace(/[()]/g, '');
+                                const movieUrl = item.url;
+
+                          
+                               
+                                window.electronAPI.openVideoWindow(movieUrl);
+                            });
+                            movieList.appendChild(card);
+                        });
+
+                        websiteContainer.appendChild(movieList);
+                        resultsContainer.appendChild(websiteContainer);
+                    });
+                } catch (error) {
+        console.error("[Search] Error fetching search results:", error);
+        resultsContainer.innerHTML = "<p>Failed to fetch results.</p>";
+    }
+};
+
+            // Group the results by website
+            function groupByWebsite(data) {
+                return data.reduce((acc, item) => {
+                    const websiteName = item.website || 'Unknown Website';
+                    if (!acc[websiteName]) {
+                        acc[websiteName] = [];
+                    }
+                    acc[websiteName].push(item);
+                    return acc;
+                }, {});
+            }
+        });
+
+        // Back button functionality
+        document.getElementById('backButton').addEventListener('click', () => {
+            goBack();
+        });
+    </script>
+
+</body>
+<script>
+async function fetchLatestRelease() {
+    const repoUrl = 'https://api.github.com/repos/AlphaNodesDev/FusionStream/releases/latest';
+
+    try {
+        // Fetch latest version from GitHub
+        const response = await fetch(repoUrl);
+        const data = await response.json();
+        let latestVersion = data.tag_name.replace(/^v/, ''); // Remove "v" if present
+
+        console.log("Latest GitHub Version:", latestVersion);
+
+        // Fetch the current version from Electron server
+        const versionResponse = await fetch("http://localhost:3001/version");
+        const versionData = await versionResponse.json();
+        const currentVersion = versionData.version;
+
+        console.log("Current App Version:", currentVersion);
+
+        // Compare versions
+        if (compareVersions(currentVersion, latestVersion) < 0) {
+            showUpdatePopup(currentVersion, latestVersion);
+        }
+    } catch (error) {
+        console.error("Error fetching the latest release:", error);
+    }
+}
+
+// Function to compare versions properly
+function compareVersions(v1, v2) {
+    const v1Parts = v1.split('.').map(Number);
+    const v2Parts = v2.split('.').map(Number);
+
+    for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
+        const num1 = v1Parts[i] || 0;
+        const num2 = v2Parts[i] || 0;
+        if (num1 < num2) return -1;
+        if (num1 > num2) return 1;
+    }
+    return 0; // Versions are equal
+}
+
+
+function showUpdatePopup(currentVersion, latestVersion) {
+    // Create the popup container
+    const popup = document.createElement('div');
+    popup.classList.add('update-popup');
+
+    // Create the popup content
+    popup.innerHTML = `
+        <div class="popup-window">
+            <div class="popup-header">
+                <span class="popup-title">Software Update Available</span>
+                <button class="popup-close-btn" onclick="closePopup()">×</button>
+            </div>
+            <div class="popup-body">
+                <p>A new version of <strong>Fusion Stream</strong> is available!</p>
+                <p><strong>Current Version:</strong> ${currentVersion} <br>
+                <strong>Latest Version:</strong> ${latestVersion}</p>
+                <p>Would you like to update now?</p>
+            </div>
+            <div class="popup-footer">
+                <button class="update-btn" onclick="updateNow()">Update Now</button>
+                <button class="later-btn" onclick="closePopup()">Later</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(popup);
+}
+
+// Function to close the update popup
+function closePopup() {
+    const popup = document.querySelector('.update-popup');
+    if (popup) {
+        popup.remove();
+    }
+}
+function updateNow() {
+    if (window.electronAPI && window.electronAPI.openExternal) {
+        window.electronAPI.openExternal("https://github.com/AlphaNodesDev/FusionStream/releases/latest");
+    } else {
+        console.error("Electron API not available. Ensure preload.js is loaded and contextIsolation is enabled.");
+    }
+    closePopup();
+}
+
+
+
+    // Call the function to check the version on page load
+    document.addEventListener('DOMContentLoaded', fetchLatestRelease);
+</script>
+
+
+<script src="app.js"></script>
+
+</html>

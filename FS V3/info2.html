@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Anime Info</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      color: white;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .overlay {
+      backdrop-filter: blur(10px);
+      background-color: rgba(0, 0, 0, 0.4);
+      padding: 2rem;
+      min-height: 100vh;
+    }
+
+    .anime-info {
+      max-width: 800px;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 2rem;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .anime-info img {
+      width: 200px;
+      border-radius: 12px;
+    }
+
+    #episodes {
+      margin-top: 1rem;
+    }
+
+    button {
+      margin: 4px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      cursor: pointer;
+      backdrop-filter: blur(5px);
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-button">⬅ Back to Info</a>
+  <div class="overlay" id="overlay">
+    <div class="anime-info" id="info"></div>
+  </div>
+
+  <script type="module">
+  async function init() {
+  const item = JSON.parse(localStorage.getItem('selectedItem'));
+  const provider = localStorage.getItem('selectedProvider');
+  const container = document.getElementById('info');
+  const overlay = document.getElementById('overlay');
+
+  if (!item) {
+    container.innerText = 'No anime selected.';
+    return;
+  }
+
+  const bgImage = item.image || item.thumbnail;
+  if (bgImage) {
+    document.body.style.backgroundImage = `url('${bgImage}')`;
+  }
+
+  container.innerHTML = `
+    <h2>${item.title}</h2>
+    <img src="${item.image || item.thumbnail}" alt="${item.title}">
+    <p>${item.synopsis || item.description || 'No description available.'}</p>
+    <div id="episodes"><p>Loading...</p></div>
+  `;
+
+  // If it's a movie, skip episode fetching
+  if (item.type === 'movie') {
+    document.getElementById('episodes').innerHTML = `
+      <button onclick="window.location.href='player.html?episodeId=${encodeURIComponent(item.link || item.id)}&title=${encodeURIComponent(item.title)}&provider=${provider}'">
+        ▶️ Watch Now
+      </button>
+    `;
+    return;
+  }
+
+  try {
+    let episodes = [];
+
+    if (provider === 'hiAnime') {
+      const res = await fetch(`https://consumet.8man.me/anime/zoro/info?id=${item.id}`);
+      const data = await res.json();
+      episodes = data.episodes || [];
+
+    } else if (provider === 'Kisskh') {
+      const res = await fetch(`https://kisskh.ovh/api/DramaList/Drama/${item.id}`);
+      const data = await res.json();
+      episodes = data.episodes || [];
+
+    } else if (provider === 'multiMovies') {
+      const res = await fetch(item.id);
+      const html = await res.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      episodes = [];
+
+      const seasons = doc.querySelectorAll('#seasons .se-c');
+      seasons.forEach((season, index) => {
+        const titleNode = season.querySelector('.title')?.cloneNode(true);
+        if (titleNode) {
+          Array.from(titleNode.children).forEach(child => titleNode.removeChild(child));
+        }
+
+        const seasonTitle = titleNode?.textContent?.trim() || `Season ${index + 1}`;
+        const episodeElements = season.querySelectorAll('.episodios > li');
+
+        episodeElements.forEach((epEl) => {
+          const numberText = epEl.querySelector('.numerando')?.textContent?.trim();
+          const episodeNumber = numberText?.split('-')[1]?.trim();
+          const link = epEl.querySelector('a')?.getAttribute('href');
+
+          if (episodeNumber && link) {
+            const title = `${seasonTitle} - Episode ${episodeNumber}`;
+            episodes.push({ title, id: link, number: episodeNumber });
+          }
+        });
+      });
+    }
+
+    renderEpisodes(episodes, provider);
+  } catch (err) {
+    document.getElementById('episodes').innerHTML = `<p>Failed to load episodes.</p>`;
+    console.error(err);
+  }
+}
+
+
+    function renderEpisodes(episodes, provider) {
+      if (!episodes.length) {
+        document.getElementById('episodes').innerHTML = '<p>No episodes available.</p>';
+        return;
+      }
+
+      const buttons = episodes.map(ep => {
+        const epNum = ep.number || ep.episode || 'N/A';
+        const epId = encodeURIComponent(ep.id || ep.url || ep.video || epNum);
+        const title = encodeURIComponent(ep.title || '');
+
+        return `<button onclick="window.location.href='player.html?episodeId=${epId}&title=${title}&provider=${provider}'">Episode ${epNum}</button>`;
+      }).join('');
+
+      document.getElementById('episodes').innerHTML = `<div>${buttons}</div>`;
+    }
+
+    init();
+  </script>
+</body>
+</html>

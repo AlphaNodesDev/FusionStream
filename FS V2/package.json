@@ -1,0 +1,13 @@
+{
+  "name": "fusionstream",
+  "version": "1.0.0",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^28.0.0",
+    "node-fetch": "^3.3.2"
+  }
+}

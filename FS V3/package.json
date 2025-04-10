@@ -1,0 +1,52 @@
+{
+  "name": "fusionstream",
+  "version": "1.0.2",
+  "description": "FusionStream is a streaming desktop app that fetches anime and movies using web scraping.",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "start": "concurrently \"electron .\" \"node main.js\"",
+    "build": "electron-builder"
+  },
+  "author": "Abhirm",
+  "license": "MIT",
+  "build": {
+    "appId": "com.alphanodes.fusionstream",
+    "productName": "FusionStream",
+    "files": [
+      "**/*",
+      "Backend-sub/**"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico",
+      "artifactName": "${productName}-${version}-setup.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "license": "./license.txt",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeader": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico",
+      "include": "build/installer.nsh"
+    }
+  },
+  "dependencies": {
+    "@electron/remote": "^2.1.2",
+    "axios": "^1.8.4",
+    "cheerio": "^1.0.0",
+    "chokidar": "^4.0.3",
+    "cors": "^2.8.5",
+    "discord-rpc": "^4.0.1",
+    "express": "^5.1.0",
+    "form-data": "^4.0.2",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "electron-builder": "^26.0.12"
+  }
+}

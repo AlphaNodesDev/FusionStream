@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FusionStream</title>
+    <script defer src="renderer.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        #searchBox { width: 80%; padding: 10px; margin: 20px; }
+        .card { display: inline-block; width: 200px; margin: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .card img { width: 100%; height: auto; }
+        #movieContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh; /* Fullscreen */
+    background: black;
+    display: none;
+    z-index: 9999;
+}
+
+#movieContainer iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+#backButton {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 10px 20px;
+    background-color: rgba(224, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+
+    </style>
+</head>
+<body>
+
+    <h1>FusionStream</h1>
+    <input type="text" id="searchBox" placeholder="Search for movies or anime...">
+    <button onclick="search()">Search</button>
+    <div id="results"></div>
+    <button id="backButton" style="display: none;" onclick="goBack()">⬅ Back</button>
+<div id="movieContainer"></div>
+
+    
+    <script>
+        // Function to go back to the previous page
+        function goBack() {
+            document.getElementById("movieContainer").innerHTML = "";  // Clear the movie content
+            document.getElementById("backButton").style.display = "none"; // Hide the back button again
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const searchBox = document.getElementById("searchBox");
+            const resultsContainer = document.getElementById("results");
+
+            window.search = async function () {
+                const query = searchBox.value.trim();
+                if (!query) return alert("Please enter a search term!");
+
+                try {
+                    const response = await fetch(`http://localhost:3000/search?q=${query}`);
+                    const data = await response.json();
+
+                    resultsContainer.innerHTML = ""; // Clear previous results
+
+                    if (data.length === 0) {
+                        resultsContainer.innerHTML = "<p>No results found.</p>";
+                        return;
+                    }
+
+                    data.forEach(item => {
+                        const card = document.createElement("div");
+                        card.classList.add("card");
+                        card.innerHTML = `
+                            <img src="${item.thumbnail}" alt="${item.title}">
+                            <h3>${item.title}</h3>
+                            <p>Episodes: ${item.episodesCount}</p>
+                        `;
+                        card.addEventListener("click", () => {
+                            const formattedTitle = item.title
+                                .replace(/\s+/g, '-')            // Replace spaces with hyphens
+                                .replace(/[()]/g, '');          // Remove parentheses
+
+                            const movieUrl = `https://kisskh.co/Drama/${encodeURIComponent(formattedTitle)}-?id=${item.id}&q=true`;
+
+                            // Show the back button when a movie is selected
+                            document.getElementById("backButton").style.display = "block";
+
+                            // Send message to main process to load movie in the same window
+                            ipcRenderer.send("load-movie-in-same-window", movieUrl);  // Inform main process
+                        });
+                        resultsContainer.appendChild(card);
+                    });
+                } catch (error) {
+                    console.error("Error fetching search results:", error);
+                    resultsContainer.innerHTML = "<p>Failed to fetch results.</p>";
+                }
+            };
+        });
+
+        // Listen for the movie URL to be loaded
+        ipcRenderer.on('load-movie', (event, movieUrl) => {
+            const movieContainer = document.getElementById("movieContainer");
+
+            // Clear previous content before loading new movie
+            movieContainer.innerHTML = `
+                <iframe src="${movieUrl}" width="100%" height="500" frameborder="0"></iframe>
+            `;
+        });
+
+        document.getElementById('backButton').addEventListener('click', () => {
+    if (window.electronAPI && typeof window.electronAPI.goBackToSearch === 'function') {
+        window.electronAPI.goBackToSearch(); // Call if the method is correctly exposed
+    } else {
+        console.error("electronAPI or goBackToSearch is not defined");
+    }
+});
+document.getElementById('backButton').addEventListener('click', () => {
+    if (window.electronAPI && typeof window.electronAPI.goBackToSearch === 'function') {
+        window.electronAPI.goBackToSearch(); // Call if the method is correctly exposed
+    } else {
+        console.error("electronAPI or goBackToSearch is not defined");
+    }
+});
+
+    </script>
+
+
+</body>
+</html>

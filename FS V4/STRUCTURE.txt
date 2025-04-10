@@ -1,0 +1,40 @@
+📁 FS Stream/
+│
+├── 📁 assets/
+│   ├── 📁 appearance/
+│   │   ├── styles.css
+│   │   └── ... (Other visual/theme assets)
+│   │
+│   ├── 📁 resources/
+│   │   ├── 📁 api/                    # All modular Express routes
+│   │   │   ├── api-play.js
+│   │   │   ├── api-info.js
+│   │   │   ├── api-search.js
+│   │   │   ├── api-catalog.js
+│   │   │   └── api-providers.js
+│   │   │
+│   │   ├── 📁 res/
+│   │   │   ├── 📁 icons/
+│   │   │   │   └── icon.ico
+│   │   │   │
+│   │   │   ├── 📁 js/
+│   │   │   │   ├── renderer.js
+│   │   │   │   ├── scripts.js
+│   │   │   │   └── ... (Other frontend JS logic)
+│   │   │   │
+│   │   │   └── 📁 UI/
+│   │   │       ├── index.html
+│   │   │       ├── settings.html
+│   │   │       ├── player.html
+│   │   │       ├── info.html
+│   │   │       └── extensions.html
+│
+├── 📁 extensions/
+│   └── discord-rpc.js
+│
+├── 📁 providers/
+│   ├── zoro.js
+│   └── multimovie.js
+│
+├── main.js
+├── package.json

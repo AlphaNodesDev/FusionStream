@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FusionStream Extensions</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../../../appearance/styles.css" />
+  <link rel="stylesheet" href="../../../appearance/swiper-bundle.min.css" />
+  <link rel="shortcut icon" href="../icons/logo2.png" type="image/x-icon" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+<style>
+  .extension-card {
+    background: #2c2c2c;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: inset 0 0 0.5px #ffffff20, 0 4px 15px rgba(0,0,0,0.5);
+    color: #fff;
+    transition: transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .extension-card:hover {
+    transform: scale(1.02);
+  }
+
+  .ext-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #66cfff;
+    margin-top: 0.5rem;
+  }
+
+  .ext-description {
+    font-size: 0.95rem;
+    color: #ccc;
+    margin: 0.5rem 0;
+  }
+
+  .ext-version {
+    font-size: 0.85rem;
+    color: #999;
+  }
+
+  .extension-logo {
+    width: 100%;
+    max-height: 130px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #1a1a1a;
+    margin-bottom: 0.5rem;
+  }
+
+  .ext-actions button {
+    background-color: #333;
+    border: none;
+    color: #fff;
+    padding: 0.4rem 0.8rem;
+    margin-right: 0.3rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .ext-actions button:hover {
+    background-color: #555;
+  }
+
+  .ext-category {
+    font-size: 1.4rem;
+    margin: 2rem 0 1rem;
+    color: #fff;
+    border-bottom: 1px solid #444;
+    padding-bottom: 0.3rem;
+  }
+
+  #searchBox {
+    padding: 0.5rem;
+    width: 100%;
+    margin: 1rem 0;
+    border-radius: 5px;
+    border: none;
+    font-size: 1rem;
+    background: #1e1e1e;
+    color: white;
+  }
+  .toggle-btn {
+  padding: 0.5rem 1.2rem;
+  background: #2d2d2d;
+  color: #ccc;
+  border: 1px solid #444;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+  background: #3a3a3a;
+  color: #fff;
+}
+
+.toggle-btn.active {
+  background: #00c853; /* Green like Windows success */
+  color: #fff;
+  border-color: #00c853;
+  box-shadow: inset 0 2px 6px #00000050;
+}
+
+.toggle-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.toggle-buttons {
+  display: flex;
+  gap: 0.3rem;
+}
+#installedContainer,
+#availableContainer {
+  border-top: 2px solid #00c853;
+  margin-top: -2px;
+  padding-top: 1rem;
+}
+
+
+
+</style>
+</head>
+<body>
+  <div id="popup" class="popup hidden">
+    <div class="popup-content">
+      <span id="popupMessage">Action completed</span>
+    </div>
+  </div>
+  
+  <div id="custom-titlebar">
+    <div class="title"><a href="index.html" class="logo"><span>Fusion</span> Stream</a></div>
+    <div id="controls">
+      <button id="back">←</button>
+      <button id="minimize">_</button>
+      <button id="close">×</button>
+    </div>
+    <script src="../js/renderer.js"></script>
+  </div>
+
+  <header>
+    <div class="nav container">
+      <div class="navbar">
+        <a href="index.html" class="nav-link "><i class='bx bx-home'></i><span>Home</span></a>
+        <a href="" class="nav-link nav-active"><i class='bx bx-extension'></i><span>Extensions</span></a>
+        <a href="settings.html" class="nav-link"><i class='bx bx-cog'></i><span>Settings</span></a>
+      </div>
+    </div>
+  </header>
+
+  <section class="movies container">
+    <div class="toggle-bar">
+      <input type="text" id="searchBox" placeholder="Search extensions..." />
+      <div class="toggle-buttons">
+        <button id="showInstalledBtn" class="toggle-btn">Installed</button>
+        <button id="showAvailableBtn" class="toggle-btn">Add New</button>
+      </div>
+    </div>
+    
+  
+    <div id="installedContainer">
+      <div class="ext-category">Installed Extensions</div>
+      <div id="installedExtensions" class="movies-content movie-grid"></div>
+    </div>
+  
+    <div id="availableContainer" style="display: none;">
+      <div class="ext-category">Available Extensions</div>
+      <div id="availableExtensions" class="movies-content movie-grid"></div>
+    </div>
+  </section>
+  
+<div class="copyright"></div>
+  <script>
+async function loadExtensions() {
+  const installedEl = document.getElementById("installedExtensions");
+  const availableEl = document.getElementById("availableExtensions");
+  const searchInput = document.getElementById("searchBox");
+
+  let local = [];
+  let remote = [];
+
+  try {
+    const localRes = await fetch("http://localhost:3000/extensions");
+    local = await localRes.json();
+  } catch (err) {
+    console.error("Error fetching local extensions:", err);
+  }
+
+  try {
+    const remoteRes = await fetch("https://raw.githubusercontent.com/AlphaNodesDev/FusionStream/main/plugins/extensions.json");
+    remote = await remoteRes.json();
+  } catch (err) {
+    console.error("Error fetching remote extensions:", err);
+  }
+
+  const installedContainer = document.getElementById("installedContainer");
+  const availableContainer = document.getElementById("availableContainer");
+
+  const showInstalledBtn = document.getElementById("showInstalledBtn");
+  const showAvailableBtn = document.getElementById("showAvailableBtn");
+
+  function renderExtensions(target, list, installed = false) {
+    target.innerHTML = list.map(ext => `
+      <div class="movie-box extension-card">
+        <img src="${ext.image}" class="extension-logo" />
+        <h3 class="ext-title">${ext.name}</h3>
+        <p class="ext-description">${ext.description}</p>
+        <p class="ext-version">Version: ${ext.version}</p>
+        <div class="ext-actions">
+          ${installed ? `
+            <button onclick="uninstallExtension('${ext.id}')">Uninstall</button>
+          ` : `
+            <button onclick="installExtension('${ext.url}', '${ext.id}')">Install</button>
+          `}
+        </div>
+      </div>
+    `).join('');
+  }
+
+
+
+
+  function filterAndRender() {
+    const search = searchInput.value.toLowerCase();
+    if (installedContainer.style.display !== "none") {
+      renderExtensions(installedEl, local.filter(e => e.name.toLowerCase().includes(search)), true);
+    }
+    if (availableContainer.style.display !== "none") {
+      renderExtensions(availableEl, remote.filter(e => e.name.toLowerCase().includes(search) && !local.some(i => i.id === e.id)), false);
+    }
+  }
+
+  searchInput.addEventListener("input", filterAndRender);
+
+  showInstalledBtn.addEventListener("click", () => {
+    installedContainer.style.display = "block";
+    availableContainer.style.display = "none";
+    showInstalledBtn.classList.add("active");
+    showAvailableBtn.classList.remove("active");
+    filterAndRender();
+  });
+
+  showAvailableBtn.addEventListener("click", () => {
+    installedContainer.style.display = "none";
+    availableContainer.style.display = "block";
+    showAvailableBtn.classList.add("active");
+    showInstalledBtn.classList.remove("active");
+    filterAndRender();
+  });
+
+
+  showInstalledBtn.classList.add("active");
+  renderExtensions(installedEl, local, true);
+  renderExtensions(availableEl, remote.filter(e => !local.some(i => i.id === e.id)), false);
+}
+
+async function installExtension(url, id) {
+  try {
+    const res = await fetch("http://localhost:3000/extensions/install", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ url, id })
+    });
+
+    const result = await res.json();
+    showCustomPopup(result.message);
+    loadExtensions(); // Refresh list
+  } catch (err) {
+    console.error("Failed to install extension:", err);
+  }
+}
+
+async function uninstallExtension(id) {
+  try {
+    const res = await fetch("http://localhost:3000/extensions/uninstall", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ id })
+    });
+
+    const result = await res.json();
+    showCustomPopup(result.message);
+        loadExtensions(); // Refresh list
+  } catch (err) {
+    console.error("Failed to uninstall extension:", err);
+  }
+}
+
+
+async function disableExtension(id) {
+  try {
+    const res = await fetch("http://localhost:3000/extensions/disable", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ id })
+    });
+
+    const result = await res.json();
+    showCustomPopup(result.message || `Extension ${id} disabled.`);
+    loadExtensions(); // Optional refresh
+  } catch (err) {
+    console.error("Failed to disable extension:", err);
+  }
+}
+
+
+loadExtensions();
+function showCustomPopup(message) {
+  const popup = document.getElementById("popup");
+  const popupMessage = document.getElementById("popupMessage");
+
+  popupMessage.textContent = message;
+  popup.classList.remove("hidden");
+  popup.classList.add("show");
+
+  setTimeout(() => {
+    popup.classList.remove("show");
+    setTimeout(() => popup.classList.add("hidden"), 300);
+  }, 6000);
+}
+  </script>
+.
+  <script src="../js/swiper-bundle.min.js"></script>
+  <script src="../js/script.js"></script>
+  <script src="../js/event.js"></script>
+</body>
+</html>

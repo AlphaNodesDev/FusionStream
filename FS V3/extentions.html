@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fusion Stream Web interface</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="./assets/styles.css" />
+  <link rel="stylesheet" href="./assets/swiper-bundle.min.css" />
+  <link rel="shortcut icon" href="./assets/logo2.png" type="image/x-icon" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+ 
+</head>
+<body>
+  <div id="custom-titlebar">
+    <div class="title">   <a href="index.html" class="logo"><span>Fusion</span> Stream</a>
+    </div>
+    <div id="controls">
+      <button id="back">←</button>
+      <button id="minimize">_</button>
+      <button id="close">×</button>
+    </div>
+  
+    <script src="./assets/renderer.js"></script>
+
+  </div>
+  
+</div>
+  <!-- Header -->
+  <header>
+    <div class="nav container">
+      <!-- Nav Links -->
+      <div class="navbar">
+        <a href="index.html" class="nav-link nav-active"><i class='bx bx-home'></i><span>Home</span></a>
+        <a href="extentions.html" class="nav-link"><i class='bx bx-extension'></i><span>Extensions</span></a>
+        <a href="settings.html" class="nav-link"><i class='bx bx-cog'></i><span>Settings</span></a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Home Section
+  <section class="home container" id="home">
+    <img src="img/home-background.png" alt="Background" class="home-img" />
+    <div class="home-text">
+      <h1 class="home-title">Hitman's Wife's <br> bodyguard</h1>
+      <p>Releasing 10 April</p>
+      <a href="#" class="watch-btn"><i class='bx bx-right-arrow'></i><span>Watch the trailer</span></a>
+    </div>
+  </section> -->
+
+  <!-- Dynamic Content Area -->
+  <section class="movies container" id="movies">
+
+  <div id="catalog" class="movies-content movie-grid"></div>
+  </section>
+
+  <!-- Error Component (Optional) -->
+  <div class="copyright">
+    <center>
+      <div class="win-error">
+        <div class="win-error-header">
+          ❌ Error - AlphaNodes Server
+          <button class="win-error-close" onclick="this.closest('.win-error').remove()">×</button>
+        </div>
+        <div class="win-error-body">
+          <p><strong>Error Code:</strong> <code>ERR503-REV-HIGHLOAD</code></p>
+          <p><strong>Message:</strong> Server is temporarily <span style="color: darkred;">down</span>.</p>
+          <pre>
+[2025-04-08 14:23:47] ServerOverloadException: Node limit exceeded
+at ServerHandler.connect(ServerHandler.java:142)
+at Main.initialize(Main.java:87)
+at App.main(App.java:19)
+          </pre>
+        </div>
+      </div>
+    </center>
+  </div>
+
+  <!-- Scripts -->
+  <script src="./assets/swiper-bundle.min.js"></script>
+  <script src="./assets/script.js"></script>
+
+ 
+
+</body>
+</html>

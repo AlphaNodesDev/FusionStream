@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FusionStream</title>
+</head>
+<body>
+  <h1>FusionStream</h1>
+  <select id="provider-select">
+    <option value="consumet">Consumet</option>
+    <option value="aea">AutoEmbedAnime</option>
+    <option value="tokyoinsider">TokyoInsader</option>
+  </select>
+  <br /><br />
+  <input type="text" id="search-input" placeholder="Search anime..." />
+  <button id="search-btn">Search</button>
+  <div id="anime-list"></div>
+  
+  <script type="module" src="./renderer.js"></script>
+</body>
+<style>
+  #anime-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.anime-card {
+  background: #222;
+  padding: 0.75rem;
+  border-radius: 12px;
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease;
+}
+
+.anime-card:hover {
+  transform: scale(1.03);
+}
+
+.anime-thumb {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.anime-card h3 {
+  font-size: 1rem;
+  margin: 0.5rem 0 0.25rem;
+}
+
+.anime-card button {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border: none;
+  background: #ff0055;
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+</style>
+</html>

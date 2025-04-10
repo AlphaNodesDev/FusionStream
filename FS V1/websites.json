@@ -1,0 +1,13 @@
+[
+    {
+      "name": "KissKH",
+      "url": "https://kisskh.co/",
+      "searchQuery": "https://kisskh.co/api/DramaList/Search?q="
+    },
+    {
+      "name": "HiAnime",
+      "url": "https://hianime.com.co/",
+      "searchQuery": "https://hianime.com.co/?s="
+    }
+  ]
+  

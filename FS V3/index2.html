@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Anime Explorer</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    .grid { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; }
+    .card { width: 150px; border: 1px solid #ccc; padding: 1rem; cursor: pointer; text-align: center; }
+    .card img { width: 100%; height: auto; }
+    h2 { margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <h1>Fusion Stream</h1>
+
+  <label for="providerSelect">Choose Provider:</label>
+  <select id="providerSelect">
+    <option value="hiAnime">hiAnime</option>
+    <option value="Kisskh">Kisskh</option>
+    <option value="multiMovies">Multimovies</option>
+  </select>
+
+  <input id="searchInput" type="text" placeholder="Search..." />
+  <button id="searchButton">Search</button>
+
+  <div id="searchResults"></div>
+  <div id="catalog"></div>
+
+  <script type="module">
+    import { hiAnimeCatalog, fetchHiAnimeCatalog, searchHiAnime } from './providers/hiAnime/functions.js';
+    import { kisskhCatalog, fetchKisskhCatalog, searchKisskh } from './providers/Kisskh/functions.js';
+    import { multiMoviesCatalog, fetchMultiMoviesCatalog, searchMultiMovies } from './providers/multimovies/functions.js';
+
+    const providerSelect = document.getElementById('providerSelect');
+    const searchBtn = document.getElementById('searchButton');
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    const catalogDiv = document.getElementById('catalog');
+
+    // Set provider from localStorage
+    const savedProvider = localStorage.getItem('selectedProvider') || 'hiAnime';
+    providerSelect.value = savedProvider;
+
+    providerSelect.addEventListener('change', () => {
+      const provider = providerSelect.value;
+      localStorage.setItem('selectedProvider', provider);
+      loadCatalog(provider);
+      searchResults.innerHTML = '';
+    });
+
+    searchBtn.addEventListener('click', async () => {
+      const query = searchInput.value.trim();
+      const provider = providerSelect.value;
+      if (query) {
+        const results = await search(provider, query);
+        renderResults(results, provider);
+      }
+    });
+
+    async function search(provider, query) {
+      if (provider === 'hiAnime') {
+        return await searchHiAnime(query);
+      } else if (provider === 'Kisskh') {
+        return await searchKisskh(query);
+      } else if (provider === 'multiMovies') {
+        return await searchMultiMovies(query);
+      }
+      return [];
+    }
+
+    function renderResults(results, provider) {
+      searchResults.innerHTML = '<h2>Search Results</h2>';
+      if (!results.length) {
+        searchResults.innerHTML += '<p>No results found.</p>';
+        return;
+      }
+
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+
+      results.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `<img src="${item.image}"><p>${item.title}</p>`;
+        card.onclick = () => {
+          localStorage.setItem('selectedItem', JSON.stringify(item));
+          localStorage.setItem('selectedProvider', provider);
+          window.location.href = 'info.html';
+        };
+        grid.appendChild(card);
+      });
+
+      searchResults.appendChild(grid);
+    }
+
+    async function loadCatalog(provider) {
+      catalogDiv.innerHTML = '';
+
+      let catalog = [], fetchFn;
+
+      if (provider === 'hiAnime') {
+        catalog = hiAnimeCatalog;
+        fetchFn = fetchHiAnimeCatalog;
+      } else if (provider === 'Kisskh') {
+        catalog = kisskhCatalog;
+        fetchFn = fetchKisskhCatalog;
+      } else if (provider === 'multiMovies') {
+        catalog = multiMoviesCatalog;
+        fetchFn = fetchMultiMoviesCatalog;
+      }
+
+      for (const section of catalog) {
+        const sectionData = await fetchFn(section.filter);
+        const sectionElement = document.createElement('div');
+        sectionElement.innerHTML = `<h2>${section.title}</h2>`;
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+
+        sectionData.results.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `<img src="${item.image}"><p>${item.title}</p>`;
+          card.onclick = () => {
+            localStorage.setItem('selectedItem', JSON.stringify(item));
+            localStorage.setItem('selectedProvider', provider);
+            window.location.href = 'info.html';
+          };
+          grid.appendChild(card);
+        });
+
+        sectionElement.appendChild(grid);
+        catalogDiv.appendChild(sectionElement);
+      }
+    }
+
+    // Initial load
+    loadCatalog(savedProvider);
+  </script>
+</body>
+</html>
