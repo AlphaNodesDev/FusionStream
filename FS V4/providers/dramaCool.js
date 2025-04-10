@@ -6,8 +6,8 @@ export const catalog = [
 export async function fetchCatalog(filter) {
   const baseUrl = 'https://consumet.8man.me/movies/dramacool';
   const url = filter === 'recent'
-    ? `${baseUrl}/recent-episodes`
-    : `${baseUrl}/top-airing`;
+    ? `${baseUrl}/top-airing`
+    : `${baseUrl}/recent-episodes`;
 
   const res = await fetch(url);
   const data = await res.json();

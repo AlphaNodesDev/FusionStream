@@ -5,14 +5,14 @@
       "link": "https://consumet.8man.me/anime/zoro"
     },
     "multimovies": {
-      "enable": true,
+      "enable": false,
       "displayname": "V2 (TV,Movies,Anime)",
       "link": "https://multimovies.press"
     },
     "dramacool":{
       "enable": true,
-      "displayname": "V2 (TV Series",
-      "link": "https://multimovies.press"
+      "displayname": "V2 (TV Series)",
+      "link": "https://consumet.8man.me/anime/zoro"
     }
   }
   
