@@ -29,14 +29,18 @@ const apiDir = path.join(__dirname, '/assets/resources/api');
 const apiFiles = fs.readdirSync(apiDir).filter(f => f.endsWith('.js'));
 
 for (const file of apiFiles) {
-  const routePath = path.join(apiDir, file);
-  const module = await import(pathToFileURL(routePath).href);
+  try {
+    const routePath = path.join(apiDir, file);
+    const module = await import(pathToFileURL(routePath).href);
 
-  if (typeof module.default === 'function') {
-    module.default(api);
-    console.log(`✅ Loaded API route: ${file}`);
-  } else {
-    console.warn(`⚠️ Route file ${file} does not export a default function`);
+    if (typeof module.default === 'function') {
+      module.default(api);
+      console.log(`✅ Loaded API route: ${file}`);
+    } else {
+      console.warn(`⚠️ Route file ${file} does not export a default function`);
+    }
+  } catch (err) {
+    console.error(`❌ Failed to load API route ${file}:`, err);
   }
 }
 
@@ -56,13 +60,15 @@ function createWindow() {
     icon: path.join(__dirname, 'logo.png'),
   // frame: false,
  //  titleBarStyle: 'hiddenInset',
-  //  backgroundColor: '#000000',
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: false,
-      nodeIntegration: true,
-      enableRemoteModule: false,
-    },
+   // backgroundColor: '#000000',
+   webPreferences: {
+    preload: path.join(__dirname, 'preload.js'),
+    contextIsolation: false,
+    nodeIntegration: true,
+    enableRemoteModule: false,
+    backgroundThrottling: false // Add this line
+  },
+  
   });
 
   enable(win.webContents);
@@ -98,12 +104,13 @@ async function loadExtensions({ electronApp, expressApp }) {
 }
 
 
-
 app.whenReady().then(async () => {
   createWindow();
 
-  // Load extensions with access to both Electron and Express
-  await loadExtensions({ electronApp: app, expressApp: api });
+  // Defer the extension and API loading to avoid UI freezing
+  setTimeout(async () => {
+    await loadExtensions({ electronApp: app, expressApp: api });
+  }, 300);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config(); 
 
 export const name = "Discord Rich Presence";
-export const version = "1.0.1";
+export const version = "1.0.0";
 export const description = "Enables Discord Rich Presence while watching.";
 export const image = "https://i.ibb.co/bgwNyMH4/8b81eb984a67f6652e430b88962a1bd4.jpg"; // small icon (app logo)
 

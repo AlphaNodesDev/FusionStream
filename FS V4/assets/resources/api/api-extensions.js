@@ -1,3 +1,4 @@
+// extensions.js
 import fs from 'fs';
 import path from 'path';
 import { pathToFileURL, fileURLToPath } from 'url';
@@ -7,8 +8,13 @@ import http from 'http';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Use home directory fallback
+const userHomeDir = process.env.APPDATA || process.env.HOME;
+const extFolder = path.join(userHomeDir, 'FusionStream', 'extensions');
+
 export default function (api) {
-  const extFolder = path.join(__dirname, '../../../extensions');
+  console.log('Extensions folder:', extFolder);
+  if (!fs.existsSync(extFolder)) fs.mkdirSync(extFolder, { recursive: true });
 
   // GET: List all extensions
   api.get('/extensions', async (req, res) => {
@@ -18,15 +24,20 @@ export default function (api) {
 
       for (const file of files) {
         const fullPath = path.join(extFolder, file);
-        const mod = await import(`${pathToFileURL(fullPath).href}?${Date.now()}`);
 
-        extensions.push({
-          id: file,
-          name: mod.name || file.replace('.js', ''),
-          description: mod.description || 'No description provided.',
-          version: mod.version || '1.0.0',
-          image: mod.image || 'https://via.placeholder.com/150',
-        });
+        try {
+          const mod = await import(`${pathToFileURL(fullPath).href}?${Date.now()}`);
+
+          extensions.push({
+            id: file,
+            name: mod.name || file.replace('.js', ''),
+            description: mod.description || 'No description provided.',
+            version: mod.version || '1.0.0',
+            image: mod.image || 'https://via.placeholder.com/150',
+          });
+        } catch (e) {
+          console.error(`Failed to import extension "${file}":`, e);
+        }
       }
 
       res.json(extensions);
@@ -60,6 +71,10 @@ export default function (api) {
         try {
           const freshImport = await import(`${pathToFileURL(filePath).href}?${Date.now()}`);
 
+          if (typeof freshImport.register === 'function') {
+            freshImport.register();
+          }
+
           res.json({
             success: true,
             message: `Extension "${freshImport.name}" installed successfully.`,
@@ -71,10 +86,6 @@ export default function (api) {
               image: freshImport.image || 'https://via.placeholder.com/150',
             }
           });
-
-          if (typeof freshImport.register === 'function') {
-            freshImport.register();
-          }
 
         } catch (err) {
           console.error("Extension install error:", err);

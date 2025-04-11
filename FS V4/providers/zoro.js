@@ -26,7 +26,7 @@ export async function search(query) {
 }
 
 export async function fetchInfo(id) {
-  const res = await fetch(`https://consumet.8man.me/anime/zoro/info?id=${encodeURIComponent(id)}`);
+  const res = await fetch(`https://consumet.8man.me/anime/zoro/info?id=${encodeURIComponent(id)}?page=1`);
   const data = await res.json();
 
   data.episodes = (data.episodes || []).map(ep => ({

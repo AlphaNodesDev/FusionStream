@@ -15,7 +15,10 @@
         "productName": "FusionStream",
         "files": [
             "**/*",
-            "Backend-sub/**"
+            "!node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+            "!**/*.map",
+            "!**/*.ts",
+            "!**/*.tsx"
         ],
         "win": {
             "target": "nsis",
