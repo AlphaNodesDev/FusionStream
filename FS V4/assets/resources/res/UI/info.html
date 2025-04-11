@@ -167,14 +167,13 @@
 
     const button = document.createElement("button");
     button.textContent = `Episode ${epNum}`;
+    button.title = titleText; // 👈 Adds the hover tooltip!
     button.dataset.episodeId = rawId;
     button.dataset.title = titleText;
     button.dataset.provider = provider;
 
-    // Log for debug
-    console.log(`[Episode ${index + 1}] ID:`, rawId, '| Title:', titleText);
+    console.log(`Tooltip title for Episode ${epNum}:`, titleText);
 
-    // Add event listener
     button.addEventListener("click", () => {
       const epId = encodeURIComponent(button.dataset.episodeId);
       const title = encodeURIComponent(button.dataset.title);
@@ -186,6 +185,7 @@
     container.appendChild(button);
   });
 }
+
 
   loadInfo();
 </script>

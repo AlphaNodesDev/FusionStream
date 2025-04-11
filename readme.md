@@ -1,5 +1,5 @@
 # 🎬 Fusion Stream
-[![Download](https://img.shields.io/badge/Download-FusionStream-blue?style=for-the-badge&logo=windows)](https://github.com/AlphaNodesDev/FusionStream/releases/download/1.0.3/FusionStream-1.0.3-setup.exe)
+[![Download](https://github.com/AlphaNodesDev/FusionStream/releases/download/1.0.4/FusionStream-1.0.4-setup.exe)]
 
 **Fusion Stream** is a sleek, modern web interface for browsing and discovering movies, TV shows, and anime
 
