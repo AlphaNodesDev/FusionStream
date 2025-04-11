@@ -4,6 +4,9 @@
 **Fusion Stream** is a sleek, modern web interface for browsing and discovering movies, TV shows, and anime
 
 ---
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/c238fb8d-24e1-437c-b6a1-19d24004b937" width="100" />
+</p>
 
 ## 🚀 Features
 
