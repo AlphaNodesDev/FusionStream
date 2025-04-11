@@ -3,7 +3,10 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import FormData from 'form-data';
-
+import puppeteer from 'puppeteer'
+const TextTrackType = {
+  VTT: 'vtt',
+};
 export const catalog = [
   { title: 'Trending', filter: '/trending/' },
   { title: 'Netflix', filter: '/genre/netflix/' },
@@ -23,7 +26,7 @@ function normalizeMultiMovies(item) {
 }
 
 export async function fetchCatalog(filter) {
-  const url = `https://multimovies.world${filter}page/1/`;
+  const url = `https://multimovies.press${filter}page/1/`;
   const res = await fetch(url);
   const html = await res.text();
   const { JSDOM } = await import('jsdom');
@@ -44,7 +47,7 @@ export async function fetchCatalog(filter) {
 }
 
 export async function search(query) {
-  const url = `https://multimovies.world/?s=${encodeURIComponent(query)}`;
+  const url = `https://multimovies.press/?s=${encodeURIComponent(query)}`;
   const res = await fetch(url);
   const html = await res.text();
   const { JSDOM } = await import('jsdom');
@@ -63,6 +66,8 @@ export async function search(query) {
 
   return items.filter(item => item.title && item.id && item.thumbnail);
 }
+
+
 
 async function multiGetInfo(link) {
   try {
@@ -162,27 +167,34 @@ export async function fetchInfo(id) {
 export async function watch(episodeId) {
   console.log("🎬 Starting stream fetch for:", episodeId);
   try {
-    const streamLinks = await multiGetStream(episodeId, 'movie');
+    const streamLinks = await multiGetStream(episodeId);
 
     if (!streamLinks.length) {
       throw new Error('No valid stream links found');
     }
 
-    const primary = streamLinks[0];
-
-    return {
-      sources: [
-        {
-          url: primary.link,
-          quality: 'auto', // or you could extract variant qualities later
-        },
-      ],
-      subtitles: primary.subtitles || [],
+    // 🧠 Merge subtitles from all streams
+    const allSubtitles = streamLinks.flatMap(link => link.subtitles || []);
+     
+    const result = {
+      sources: streamLinks.map(link => ({
+        url: link.link,
+        quality: link.quality || 'default'
+      })),
+      subtitles: allSubtitles.map(sub => ({
+        url: sub.url,
+        language: sub.lang || 'Unknown'
+     
+      })),
       headers: {
         Referer: new URL(episodeId).origin + '/',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-      },
+      }
     };
+
+    console.log("✅ Parsed Stream Data:", result);
+    return result;
+
   } catch (err) {
     console.error('❌ watch() failed:', err.message);
     throw new Error('Failed to fetch stream');
@@ -191,128 +203,134 @@ export async function watch(episodeId) {
 
 
 
+/**
+ * Custom headers copied from app
+ */
+const headers = {
+  'sec-ch-ua':
+    '"Not_A Brand";v="8", "Chromium";v="120", "Microsoft Edge";v="120"',
+  'sec-ch-ua-mobile': '?0',
+  'sec-ch-ua-platform': '"Windows"',
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+};
 
-export async function getMultiMoviesStream(url) {
-  const headers = {
-    'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Microsoft Edge";v="120"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"',
-    'Referer': 'https://multimovies.world',
-    'Sec-Fetch-User': '?1',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
-    'Origin': 'https://multimovies.world',
-    'X-Requested-With': 'XMLHttpRequest',
+/**
+ * Gets streaming links for a movie page
+ * @param {string} url - The multimovies.guru movie URL
+ * @returns {Promise<Stream[]>}
+ */
+function getLangFromUrl(url) {
+    const match = url.match(/_(\w+)\.vtt$/);
+  if (!match) return 'Unknown';
+
+  const code = match[1].toLowerCase();
+
+  const langMap = {
+    eng: 'English',
+    ara: 'Arabic',
+    jpn: 'Japanese',
+    chi: 'Chinese',
+    ind: 'Indonesian',
+    spa: 'Spanish',
+    fra: 'French',
+    ger: 'German',
+    ita: 'Italian',
+    kor: 'Korean'
   };
+  
+
+  return langMap[code] || code.toUpperCase();
+}
+
+export const multiGetStream = async (url) => {
+  console.log('🎯 Launching Puppeteer to fetch page:', url);
+
+  let browser;
+  const interceptedStreams = [];
 
   try {
-    const res = await axios.get(url, { headers });
-    const html = res.data;
-    const $ = cheerio.load(html);
+    browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
 
-    const postId = $('#player-option-1').attr('data-post') ?? '';
-    const nume = $('#player-option-1').attr('data-nume') ?? '';
-    const typeValue = $('#player-option-1').attr('data-type') ?? '';
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      const reqUrl = req.url();
 
-    const baseUrl = url.split('/').slice(0, 3).join('/');
+      // 🎥 HLS streams
+      if (reqUrl.includes('.m3u8')) {
+        let quality = 'default';
+        const match = reqUrl.match(/index-(f\d+)-v\d+-a\d+\.m3u8/);
+        if (match) {
+          const qualityCode = match[1];
+          switch (qualityCode) {
+            case 'f1':
+              quality = '360p';
+              break;
+            case 'f2':
+              quality = '480p';
+              break;
+            case 'f3':
+              quality = '720p';
+              break;
+            case 'f4':
+              quality = '1080p';
+              break;
+            default:
+              quality = 'auto';
+          }
+        } else if (reqUrl.includes('master.m3u8')) {
+          quality = 'auto';
+        }
 
-    const formData = new FormData();
-    formData.append('action', 'doo_player_ajax');
-    formData.append('post', postId);
-    formData.append('nume', nume);
-    formData.append('type', typeValue);
+        console.log(`📡 Intercepted stream: ${reqUrl} (Quality: ${quality})`);
 
-    const playerRes = await fetch(`${baseUrl}/wp-admin/admin-ajax.php`, {
-      method: 'POST',
-      headers,
-      body: formData,
-    });
-
-    const playerData = await playerRes.json();
-    let ifameUrl = playerData?.embed_url?.match(/<iframe[^>]+src=["']([^"']+)["']/i)?.[1] || playerData?.embed_url;
-
-    if (!ifameUrl.includes('multimovies')) {
-      let playerBaseUrl = ifameUrl.split('/').slice(0, 3).join('/');
-      const headRes = await axios.head(playerBaseUrl, { headers });
-
-      if (headRes?.request?.res?.responseUrl) {
-        playerBaseUrl = headRes.request.res.responseUrl.split('/').slice(0, 3).join('/');
+        interceptedStreams.push({
+          server: 'Multi',
+          link: reqUrl,
+          type: 'm3u8',
+          quality,
+          subtitles: [],
+        });
       }
 
-      const playerId = ifameUrl.split('/').pop();
-      const newFormData = new FormData();
-      newFormData.append('sid', playerId);
-
-      const newPlayerRes = await fetch(`${playerBaseUrl}/embedhelper.php`, {
-        method: 'POST',
-        headers,
-        body: newFormData,
-      });
-
-      const newPlayerData = await newPlayerRes.json();
-      let siteId;
-      try {
-        siteId = JSON.parse(atob(newPlayerData?.mresult))?.smwh;
-      } catch (e) {
-        siteId = newPlayerData?.mresult?.smwh;
-      }
-
-      const siteUrl = newPlayerData?.siteUrls?.smwh;
-      ifameUrl = siteUrl + siteId;
-    }
-
-    const iframeRes = await axios.get(ifameUrl, { headers });
-    const iframeData = iframeRes.data;
-
-    const functionRegex = /eval\(function\((.*?)\)\{.*?return p\}.*?\('(.*?)'\.split/;
-    const match = functionRegex.exec(iframeData);
-
-    let decodedScript = '';
-    if (match) {
-      const encodedString = match[2];
-      decodedScript = encodedString.split("',36,")[0];
-      const a = 36;
-      const k = encodedString.split("',36,")[1].slice(2).split('|');
-      let c = k.length;
-
-      while (c--) {
-        if (k[c]) {
-          const regex = new RegExp('\\b' + c.toString(a) + '\\b', 'g');
-          decodedScript = decodedScript.replace(regex, k[c]);
+      if (reqUrl.endsWith('.vtt') || reqUrl.endsWith('.srt')) {
+        console.log(`📝 Found subtitle: ${reqUrl}`);
+        if (interceptedStreams.length > 0) {
+          interceptedStreams[interceptedStreams.length - 1].subtitles.push({
+            url: reqUrl,
+            lang: getLangFromUrl(reqUrl)
+          });
         }
       }
+      
+
+      req.continue();
+    });
+
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
+
+    await page.waitForSelector('iframe', { timeout: 10000 });
+    const iframeUrl = await page.evaluate(() => {
+      const iframe = document.querySelector('iframe');
+      return iframe?.src || null;
+    });
+
+    console.log('🎥 Found iframe:', iframeUrl);
+    if (!iframeUrl) throw new Error('No iframe found');
+
+    await page.goto(iframeUrl, { waitUntil: 'networkidle2' });
+    await new Promise((res) => setTimeout(res, 5000));
+
+    if (!interceptedStreams.length) {
+      throw new Error('No stream URLs intercepted');
     }
 
-    const streamUrl = decodedScript?.match(/file:\s*"([^"]+\.m3u8[^"]*)"/)?.[1];
-    const subtitles = [];
-    const subtitleMatch = decodedScript?.match(/https:\/\/[^\s"]+\.vtt/g);
-
-    if (subtitleMatch?.length) {
-      subtitleMatch.forEach(sub => {
-        const langMatch = sub.match(/_([a-zA-Z]{3})\.vtt$/);
-        const lang = langMatch ? langMatch[1] : 'eng';
-        subtitles.push({
-          language: lang,
-          uri: sub,
-          type: 'vtt',
-          title: lang,
-        });
-      });
-    }
-
-    if (streamUrl) {
-      return [
-        {
-          server: 'Multi',
-          link: streamUrl.replace(/&i=\d+(\.\d+)?&/, '&i=0.4&'),
-          type: 'm3u8',
-          subtitles,
-        },
-      ];
-    }
-
-    return [];
+    return interceptedStreams;
   } catch (err) {
-    console.error('Error fetching stream:', err);
+    console.error('⚠️ multiGetStream() failed:', err.message);
     return [];
+  } finally {
+    if (browser) await browser.close();
   }
-}
+};
