@@ -1,5 +1,5 @@
 export const name = "Presistance";
-export const version = "1.0.0";
+export const version = "1.0.1";
 export const description = "Tracks and displays your watch history directly in the FusionStream interface.";
 export const image = "https://i.ibb.co/DH1sVskT/Chat-GPT-Image-Apr-11-2025-01-42-34-PM.png";
 
