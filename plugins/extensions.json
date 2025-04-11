@@ -2,7 +2,7 @@
     {
       "id": "discord-rpc.js",
       "name": "Discord Rich Presence",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "Enables Discord Rich Presence while watching.",
       "image": "https://i.ibb.co/bgwNyMH4/8b81eb984a67f6652e430b88962a1bd4.jpg",
       "url": "https://raw.githubusercontent.com/AlphaNodesDev/FusionStream/main/plugins/discord-rpc.js"

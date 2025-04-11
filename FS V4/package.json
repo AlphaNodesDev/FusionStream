@@ -40,12 +40,16 @@
         "chokidar": "^4.0.3",
         "cors": "^2.8.5",
         "discord-rpc": "^4.0.1",
-        "dotenv": "^16.4.7",
+        "dotenv": "^16.5.0",
         "express": "^5.1.0",
+        "express-session": "^1.18.1",
         "form-data": "^4.0.2",
+        "google-auth-library": "^9.15.1",
+        "googleapis": "^148.0.0",
         "https-proxy-agent": "^7.0.6",
         "jsdom": "^26.0.0",
         "node-fetch": "^3.3.2",
+        "open": "^10.1.0",
         "puppeteer": "^24.6.1"
     },
     "devDependencies": {

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login - FusionStream</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../../../appearance/styles.css" />
+  <link rel="shortcut icon" href="../icons/logo2.png" type="image/x-icon" />
+  <style>
+    body {
+      background: #111;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: sans-serif;
+    }
+
+    .login-box {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 40px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 0 12px rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    .login-box h2 {
+      margin-bottom: 20px;
+    }
+
+    .google-btn {
+      background-color: white;
+      color: #333;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s;
+      margin-top: 20px;
+      justify-content: center;
+    }
+
+    .google-btn:hover {
+      background-color: #e2e2e2;
+    }
+
+    .google-btn img {
+      width: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>Login to FusionStream</h2>
+    <button class="google-btn" onclick="loginWithGoogle()">
+      <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo" />
+      Sign in with Google
+    </button>
+  </div>
+
+  <script>
+    function loginWithGoogle() {
+      // This redirects to your backend, which opens Google login in default browser
+      window.location.href = 'http://localhost:3000/auth/google';
+    }
+  </script>
+  <script>
+async function checkLoginStatus() {
+  try {
+    const res = await fetch('http://localhost:3000/auth/status');
+    const data = await res.json();
+
+    if (data.loggedIn) {
+      console.log("✅ Logged in user:", data.user);
+      // Redirect or tell Electron it's done
+      window.location.href = "/main.html"; // or load your dashboard etc
+    } else {
+      setTimeout(checkLoginStatus, 1000); // keep checking
+    }
+  } catch (err) {
+    console.error("Error checking login:", err);
+    setTimeout(checkLoginStatus, 2000); // retry on error
+  }
+}
+
+checkLoginStatus();
+</script>
+
+</body>
+</html>

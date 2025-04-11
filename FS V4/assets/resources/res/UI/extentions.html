@@ -131,6 +131,10 @@
   padding-top: 1rem;
 }
 
+.extension-card.outdated {
+  border: 2px solid #ff5252;
+  box-shadow: 0 0 10px #ff525255;
+}
 
 
 </style>
@@ -145,10 +149,12 @@
   <div id="custom-titlebar">
     <div class="title"><a href="index.html" class="logo"><span>Fusion</span> Stream</a></div>
     <div id="controls">
-      <button id="back">←</button>
-      <button id="minimize">_</button>
-      <button id="close">×</button>
-    </div>
+  <button id="back" title="Back">⏴</button>
+  <button id="fullscreen" title="Fullscreen">⛶</button>
+  <button id="minimize" title="Minimize">🗕</button>
+  <button id="close" title="Close">✖</button>
+</div>
+
     <script src="../js/renderer.js"></script>
   </div>
 
@@ -185,6 +191,15 @@
   
 <div class="copyright"></div>
   <script>
+    function compareVersions(v1, v2) {
+  const toNums = v => v.split('.').map(n => parseInt(n));
+  const [a1, a2, a3] = toNums(v1);
+  const [b1, b2, b3] = toNums(v2);
+  if (a1 !== b1) return a1 - b1;
+  if (a2 !== b2) return a2 - b2;
+  return (a3 || 0) - (b3 || 0);
+}
+
 async function loadExtensions() {
   const installedEl = document.getElementById("installedExtensions");
   const availableEl = document.getElementById("availableExtensions");
@@ -214,12 +229,24 @@ async function loadExtensions() {
   const showAvailableBtn = document.getElementById("showAvailableBtn");
 
   function renderExtensions(target, list, installed = false) {
-    target.innerHTML = list.map(ext => `
-      <div class="movie-box extension-card">
+  target.innerHTML = list.map(ext => {
+    let outdated = false;
+    if (installed) {
+      const matching = remote.find(r => r.id === ext.id);
+      if (matching && compareVersions(matching.version, ext.version) > 0) {
+        outdated = true;
+      }
+    }
+
+    return `
+      <div class="movie-box extension-card ${outdated ? 'outdated' : ''}">
         <img src="${ext.image}" class="extension-logo" />
         <h3 class="ext-title">${ext.name}</h3>
         <p class="ext-description">${ext.description}</p>
-        <p class="ext-version">Version: ${ext.version}</p>
+        <p class="ext-version">
+          Version: ${ext.version}
+          ${outdated ? `<span style="color: #ff5252; font-weight: bold;"> (Update Available)</span>` : ""}
+        </p>
         <div class="ext-actions">
           ${installed ? `
             <button onclick="uninstallExtension('${ext.id}')">Uninstall</button>
@@ -228,8 +255,10 @@ async function loadExtensions() {
           `}
         </div>
       </div>
-    `).join('');
-  }
+    `;
+  }).join('');
+}
+
 
 
 

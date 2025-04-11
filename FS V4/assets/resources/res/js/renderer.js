@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
     win.minimize();
   });
 
+  document.getElementById('fullscreen').addEventListener('click', () => {
+    win.setFullScreen(!win.isFullScreen());
+  });
+
   document.getElementById('close').addEventListener('click', () => {
     win.close();
   });

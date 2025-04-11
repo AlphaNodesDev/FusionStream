@@ -27,6 +27,7 @@
 │   │   │       ├── settings.html
 │   │   │       ├── player.html
 │   │   │       ├── info.html
+│   │   │       ├── login.html
 │   │   │       └── extensions.html
 │
 ├── 📁 extensions/
