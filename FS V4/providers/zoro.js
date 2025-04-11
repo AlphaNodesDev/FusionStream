@@ -6,8 +6,8 @@ export const catalog = [
 export async function fetchCatalog(filter) {
   const baseUrl = 'https://consumet.8man.me/anime/zoro';
   const url = filter === 'recent'
-    ? `${baseUrl}/recent-movies`
-    : `${baseUrl}/recent-shows`;
+    ? `${baseUrl}/recent-episodes`
+    : `${baseUrl}/top-airing`;
 
   const res = await fetch(url);
   const data = await res.json();

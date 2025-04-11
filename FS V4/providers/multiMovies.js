@@ -23,7 +23,7 @@ function normalizeMultiMovies(item) {
 }
 
 export async function fetchCatalog(filter) {
-  const url = `https://multimovies.press${filter}page/1/`;
+  const url = `https://multimovies.world${filter}page/1/`;
   const res = await fetch(url);
   const html = await res.text();
   const { JSDOM } = await import('jsdom');
@@ -44,7 +44,7 @@ export async function fetchCatalog(filter) {
 }
 
 export async function search(query) {
-  const url = `https://multimovies.press/?s=${encodeURIComponent(query)}`;
+  const url = `https://multimovies.world/?s=${encodeURIComponent(query)}`;
   const res = await fetch(url);
   const html = await res.text();
   const { JSDOM } = await import('jsdom');
@@ -197,10 +197,10 @@ export async function getMultiMoviesStream(url) {
     'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Microsoft Edge";v="120"',
     'sec-ch-ua-mobile': '?0',
     'sec-ch-ua-platform': '"Windows"',
-    'Referer': 'https://multimovies.online/',
+    'Referer': 'https://multimovies.world',
     'Sec-Fetch-User': '?1',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
-    'Origin': 'https://multimovies.online',
+    'Origin': 'https://multimovies.world',
     'X-Requested-With': 'XMLHttpRequest',
   };
 
