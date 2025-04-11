@@ -6,6 +6,15 @@
       "description": "Enables Discord Rich Presence while watching.",
       "image": "https://i.ibb.co/bgwNyMH4/8b81eb984a67f6652e430b88962a1bd4.jpg",
       "url": "https://raw.githubusercontent.com/AlphaNodesDev/FusionStream/main/plugins/discord-rpc.js"
+    },
+    {
+      "id": "presistance.js",
+      "name": "Presistance",
+      "version": "1.0.1",
+      "description": "Tracks and displays your watch history directly in the FusionStream interface.",
+      "image": "https://i.ibb.co/DH1sVskT/Chat-GPT-Image-Apr-11-2025-01-42-34-PM.png",
+      "url": "https://raw.githubusercontent.com/AlphaNodesDev/FusionStream/main/plugins/presistance.js"
     }
+    
   ]
   
