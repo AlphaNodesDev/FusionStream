@@ -8,17 +8,33 @@ export const version = "1.0.0";
 export const description = "Enables Discord Rich Presence while watching.";
 export const image = "https://i.ibb.co/bgwNyMH4/8b81eb984a67f6652e430b88962a1bd4.jpg"; // small icon (app logo)
 
+
+
+
 export function register() {
+  
   const clientId = process.env.DISCORD_CLIENT_ID;
   if (!clientId) {
-    console.warn("[Discord RPC] Client ID not found in .env");
+    setTimeout(() => {
+      globalThis.sendFrontendMessage({
+        type: 'error',
+        message: '[Discord RPC] Current Version is Not Supported To This Plugin',
+        time: Date.now()
+      });
+    }, 1000); 
     return;
   }
 
   const client = new RPC.Client({ transport: 'ipc' });
 
   client.login({ clientId }).catch(err => {
-    console.error("[Discord RPC] Failed to login:", err);
+    setTimeout(() => {
+      globalThis.sendFrontendMessage({
+        type: 'error',
+        message: '[Discord RPC] Current Version is Not Supported To This Plugin',
+        time: Date.now()
+      });
+    }, 1000); 
   });
 
   client.on('ready', () => {
@@ -44,7 +60,13 @@ export function register() {
     
             return response;
           } catch (err) {
-            console.warn('[Rich Presence Intercept] Failed to fetch info:', err);
+            setTimeout(() => {
+              globalThis.sendFrontendMessage({
+                type: 'error',
+                message: '[Discord RPC] Somthing Went Wrong',
+                time: Date.now()
+              });
+            }, 1000); 
           }
         }
     

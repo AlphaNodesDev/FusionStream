@@ -94,10 +94,13 @@ export async function watch(episodeId) {
             url: src.url,
             quality: src.quality || "default"
           })),
-          subtitles: (data.subtitles || []).map(sub => ({
+          subtitles: (data.subtitles || [])
+          .filter(sub => sub.lang !== 'thumbnails')
+          .map(sub => ({
             url: sub.url,
             language: sub.lang || "Unknown"
           })),
+        
           headers: {
             Referer: "https://consumet.8man.me"
           }

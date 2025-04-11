@@ -54,9 +54,9 @@ function createWindow() {
     width: 1000,
     height: 800,
     icon: path.join(__dirname, 'logo.png'),
-   frame: false,
-   titleBarStyle: 'hiddenInset',
-    backgroundColor: '#000000',
+  // frame: false,
+ //  titleBarStyle: 'hiddenInset',
+  //  backgroundColor: '#000000',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: false,
@@ -68,7 +68,7 @@ function createWindow() {
   enable(win.webContents);
 
  
- win.setMenu(null);
+ //win.setMenu(null);
 
   win.loadFile(path.join(__dirname, './assets/resources/res/UI/index.html'));
 }
@@ -96,6 +96,7 @@ async function loadExtensions({ electronApp, expressApp }) {
     }
   }
 }
+
 
 
 app.whenReady().then(async () => {

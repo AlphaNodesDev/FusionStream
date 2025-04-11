@@ -50,7 +50,8 @@
         "jsdom": "^26.0.0",
         "node-fetch": "^3.3.2",
         "open": "^10.1.0",
-        "puppeteer": "^24.6.1"
+        "puppeteer": "^24.6.1",
+        "ws": "^8.18.1"
     },
     "devDependencies": {
         "concurrently": "^9.1.2",

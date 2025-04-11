@@ -498,9 +498,66 @@ document.getElementById("playOnVLC").addEventListener("click", async () => {
     dragElement(document.getElementById("videoControls"));
 
 
-
-
   </script>
+  <script>
+  const startShare = document.getElementById("startShare");
+  const joinShare = document.getElementById("joinShare");
+  const roomInput = document.getElementById("roomInput");
+
+  let peer = null;
+  let socket = null;
+  let isHost = false;
+
+  // You’ll need a simple signaling server (see below)
+  const SIGNAL_SERVER = "wss://your-signal-server.com"; // Replace with your actual WebSocket server
+  const ROOM_ID = `room-${Math.random().toString(36).substring(2, 10)}`;
+
+  function initWebRTC(isInitiator) {
+    peer = new SimplePeer({ initiator: isInitiator, trickle: false, stream: video.captureStream() });
+
+    peer.on('signal', data => {
+      socket.send(JSON.stringify({ type: "signal", room: ROOM_ID, data }));
+    });
+
+    peer.on('connect', () => {
+      console.log("🟢 Peer connected");
+    });
+
+    peer.on('error', err => {
+      console.error("❌ WebRTC Error:", err);
+    });
+  }
+
+  function setupSocket() {
+    socket = new WebSocket(SIGNAL_SERVER);
+
+    socket.onopen = () => {
+      socket.send(JSON.stringify({ type: "join", room: ROOM_ID }));
+      if (isHost) initWebRTC(true);
+    };
+
+    socket.onmessage = e => {
+      const msg = JSON.parse(e.data);
+      if (msg.type === "signal" && peer) {
+        peer.signal(msg.data);
+      }
+    };
+  }
+
+  startShare.onclick = () => {
+    isHost = true;
+    setupSocket();
+    alert(`Send this Room Code to a friend to join: ${ROOM_ID}`);
+  };
+
+  joinShare.onclick = () => {
+    isHost = false;
+    const room = roomInput.value.trim();
+    if (!room) return alert("Enter a room code.");
+    setupSocket();
+  };
+</script>
+
 
   <script src="../js/renderer.js"></script>
 </body>
