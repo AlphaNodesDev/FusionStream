@@ -245,6 +245,7 @@ async function loadCatalog() {
 
   } catch (err) {
     console.error("Catalog load failed:", err);
+    console.error('Invalid response format:', data);
     catalogContainer.innerHTML = '<p style="text-align:center;color:gray;">Failed to load content.</p>';
   } finally {
     loader.style.display = 'none'; // Always hide loader
