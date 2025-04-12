@@ -58,15 +58,15 @@ function createWindow() {
     width: 1000,
     height: 800,
     icon: path.join(__dirname, 'logo.png'),
-   frame: false,
-  titleBarStyle: 'hiddenInset',
-    backgroundColor: '#000000',
+  // frame: false,
+ // titleBarStyle: 'hiddenInset',
+  //  backgroundColor: '#000000',
    webPreferences: {
     preload: path.join(__dirname, 'preload.js'),
     contextIsolation: false,
     nodeIntegration: true,
     enableRemoteModule: false,
-    backgroundThrottling: false // Add this line
+    backgroundThrottling: false 
   },
   
   });
@@ -74,72 +74,64 @@ function createWindow() {
   enable(win.webContents);
 
  
- win.setMenu(null);
+ //win.setMenu(null);
 
   win.loadFile(path.join(__dirname, './assets/resources/res/UI/index.html'));
 }
 
 
-
+//Extensions Loading From UserData {appdata}
 import { createRequire } from 'module';
 const appRequire = createRequire(import.meta.url);
-
-async function loadExtensions({ electronApp, expressApp }) {
-  const extensionsDir = path.join(electronApp.getPath('userData'), 'extensions');
-
-  if (!fs.existsSync(extensionsDir)) {
-    fs.mkdirSync(extensionsDir, { recursive: true });
+let loadedExtensions = [];
+export async function loadExtensions({ electronApp, expressApp }) {
+  for (const ext of loadedExtensions) {
+    try {
+      if (ext?.unregister) ext.unregister();
+    } catch (e) {
+      console.warn(`Failed to unregister ${ext.name}`, e);
+    }
   }
+  loadedExtensions = [];
+
+  const extensionsDir = path.join(electronApp.getPath('userData'), 'extensions');
+  if (!fs.existsSync(extensionsDir)) fs.mkdirSync(extensionsDir, { recursive: true });
 
   const files = fs.readdirSync(extensionsDir).filter(f => f.endsWith('.js'));
 
   for (const file of files) {
     const filePath = path.join(extensionsDir, file);
-    let pluginName = path.basename(file, '.js');
+    const fileUrl = pathToFileURL(filePath).href;
+    const pluginName = path.basename(file, '.js');
 
     try {
-      const raw = fs.readFileSync(filePath, 'utf-8');
-      const nameMatch = /export\s+const\s+name\s*=\s*['"`](.*?)['"`]/.exec(raw);
-      if (nameMatch) {
-        pluginName = nameMatch[1];
-      }
-    } catch (e) {
-      console.warn(`⚠️ Failed to read ${file} to extract plugin name`, e);
-    }
-
-    try {
-      // ✅ Dynamically import the extension (ESM safe)
-      const mod = await import(`file://${filePath}`);
-
+      const mod = await import(fileUrl + `?cacheBust=${Date.now()}`);
       if (typeof mod.register === 'function') {
         mod.register({
           electronApp,
           expressApp,
-          require: (moduleName) => {
+          require: (modName) => {
             try {
-              return createRequire(filePath)(moduleName); // try local to plugin
+              return createRequire(filePath)(modName);
             } catch {
-              return appRequire(moduleName); // fallback to app
+              return appRequire(modName);
             }
-          }
+          },
         });
+        loadedExtensions.push({ name: pluginName, unregister: mod.unregister });
         console.log(`✅ Loaded extension: ${pluginName}`);
       } else {
         console.warn(`⚠️ Extension ${pluginName} does not export 'register'`);
       }
     } catch (err) {
-      console.error(`❌ Failed to load extension ${pluginName}:`, err);
-
-      setTimeout(() => {
-        globalThis.sendFrontendMessage?.({
-          type: 'error',
-          message: `[Plugins] Failed to load plugin: ${pluginName}`,
-        });
-      }, 1000);
+      console.error(`❌ Failed to load extension: ${pluginName}`, err);
+      globalThis.sendFrontendMessage?.({
+        type: 'error',
+        message: `[Extensions] Failed to load plugin: ${pluginName}`,
+      });
     }
   }
 }
-
 
 app.whenReady().then(async () => {
   createWindow();

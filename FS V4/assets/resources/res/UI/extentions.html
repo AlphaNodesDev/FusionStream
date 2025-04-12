@@ -134,42 +134,49 @@
 .extension-card.outdated {
   border: 2px solid #ff5252;
   box-shadow: 0 0 10px #ff525255;
+  background-color: #3f3f3f;  /* Optional: Highlight the outdated cards */
 }
+
 
 
 </style>
 
-
 </head>
 <body>
+
+  <!-- Popup Notification -->
   <div id="popup" class="popup hidden">
     <div class="popup-content">
       <span id="popupMessage">Action completed</span>
     </div>
   </div>
-  
-  <div id="custom-titlebar">
-    <div class="title"><a href="index.html" class="logo"><span>Fusion</span> Stream</a></div>
-    <div id="controls">
-  <button id="back" title="Back">⏴</button>
-  <button id="fullscreen" title="Fullscreen">⛶</button>
-  <button id="minimize" title="Minimize">🗕</button>
-  <button id="close" title="Close">✖</button>
-</div>
 
+  <!-- Custom Titlebar -->
+  <div id="custom-titlebar">
+    <div class="title">
+      <a href="index.html" class="logo"><span>Fusion</span> Stream</a>
+    </div>
+    <div id="controls">
+      <button id="back" title="Back">⏴</button>
+      <button id="fullscreen" title="Fullscreen">⛶</button>
+      <button id="minimize" title="Minimize">🗕</button>
+      <button id="close" title="Close">✖</button>
+    </div>
     <script src="../js/renderer.js"></script>
   </div>
 
+  <!-- Navigation -->
   <header>
     <div class="nav container">
       <div class="navbar">
-        <a href="index.html" class="nav-link "><i class='bx bx-home'></i><span>Home</span></a>
+        <a href="index.html" class="nav-link"><i class='bx bx-home'></i><span>Home</span></a>
         <a href="" class="nav-link nav-active"><i class='bx bx-extension'></i><span>Extensions</span></a>
         <a href="settings.html" class="nav-link"><i class='bx bx-cog'></i><span>Settings</span></a>
       </div>
     </div>
   </header>
 
+  <!-- Extensions Section -->
   <section class="movies container">
     <div class="toggle-bar">
       <input type="text" id="searchBox" placeholder="Search extensions..." />
@@ -178,70 +185,89 @@
         <button id="showAvailableBtn" class="toggle-btn">Add New</button>
       </div>
     </div>
-    
-  
+
     <div id="installedContainer">
       <div class="ext-category">Installed Extensions</div>
       <div id="installedExtensions" class="movies-content movie-grid"></div>
     </div>
-  
+
     <div id="availableContainer" style="display: none;">
       <div class="ext-category">Available Extensions</div>
       <div id="availableExtensions" class="movies-content movie-grid"></div>
     </div>
   </section>
-  
-<div class="copyright"></div>
+
+  <div class="copyright"></div>
+
+  <!-- Core Logic -->
   <script>
     function compareVersions(v1, v2) {
-  const toNums = v => v.split('.').map(n => parseInt(n));
-  const [a1, a2, a3] = toNums(v1);
-  const [b1, b2, b3] = toNums(v2);
-  if (a1 !== b1) return a1 - b1;
-  if (a2 !== b2) return a2 - b2;
-  return (a3 || 0) - (b3 || 0);
-}
+      const toNums = v => v.split('.').map(n => parseInt(n));
+      const [a1, a2, a3] = toNums(v1);
+      const [b1, b2, b3] = toNums(v2);
+      if (a1 !== b1) return a1 - b1;
+      if (a2 !== b2) return a2 - b2;
+      return (a3 || 0) - (b3 || 0);
+    }
 
-let local = [];
-let remote = [];
+    let local = [];
+    let remote = [];
 
-async function loadExtensions() {
-  const installedEl = document.getElementById("installedExtensions");
-  const availableEl = document.getElementById("availableExtensions");
-  const searchInput = document.getElementById("searchBox");
+    async function loadExtensions() {
+      const installedEl = document.getElementById("installedExtensions");
+      const availableEl = document.getElementById("availableExtensions");
+      const searchInput = document.getElementById("searchBox");
 
-  local = [];
-  remote = [];
+      local = [];
+      remote = [];
 
-  try {
-    const localRes = await fetch("http://localhost:3000/extensions");
-    local = await localRes.json();
-  } catch (err) {
-    console.error("Error fetching local extensions:", err);
-  }
+      try {
+        const localRes = await fetch("http://localhost:3000/extensions");
+        local = await localRes.json();
+      } catch (err) {
+        console.error("Error fetching local extensions:", err);
+      }
 
-  try {
-    const remoteRes = await fetch("https://raw.githubusercontent.com/AlphaNodesDev/FusionStream/main/plugins/extensions.json");
-    remote = await remoteRes.json();
-  } catch (err) {
-    console.error("Error fetching remote extensions:", err);
-  }
+      try {
+        const remoteRes = await fetch("https://raw.githubusercontent.com/AlphaNodesDev/FusionStream/main/plugins/extensions.json");
+        remote = await remoteRes.json();
+      } catch (err) {
+        console.error("Error fetching remote extensions:", err);
+      }
 
-  const installedContainer = document.getElementById("installedContainer");
-  const availableContainer = document.getElementById("availableContainer");
+      const installedContainer = document.getElementById("installedContainer");
+      const availableContainer = document.getElementById("availableContainer");
 
-  const showInstalledBtn = document.getElementById("showInstalledBtn");
-  const showAvailableBtn = document.getElementById("showAvailableBtn");
+      const showInstalledBtn = document.getElementById("showInstalledBtn");
+      const showAvailableBtn = document.getElementById("showAvailableBtn");
 
-  function renderExtensions(target, list, installed = false) {
+      function renderExtensions(target, list, installed = false) {
   target.innerHTML = list.map(ext => {
     let outdated = false;
+    
+    let matching;
+
     if (installed) {
-      const matching = remote.find(r => r.id === ext.id);
-      if (matching && compareVersions(matching.version, ext.version) > 0) {
-        outdated = true;
+      // Normalize the extension id (add '.js' to local ids if necessary)
+      const normalizedExtId = ext.id.endsWith('.js') ? ext.id : ext.id + '.js';  // Ensure .js is appended for comparison
+
+      // Log the remote ids for comparison
+      console.log("Checking for matching remote extensions...");
+      console.log("Looking for remote extension with id:", normalizedExtId);
+
+      // Find the matching extension from the remote data
+      matching = remote.find(r => r.id === normalizedExtId);
+
+      if (matching) {
+        // Compare versions only if matching extension is found
+        if (compareVersions(matching.version, ext.version) > 0) {
+          outdated = true;  // Mark as outdated if remote version is greater
+        }
       }
     }
+
+    console.log("Installed Extension:", ext);
+    console.log("Matching Remote Extension:", matching);
 
     return `
       <div class="movie-box extension-card ${outdated ? 'outdated' : ''}">
@@ -253,9 +279,9 @@ async function loadExtensions() {
           ${outdated ? `<span style="color: #ff5252; font-weight: bold;"> (Update Available)</span>` : ""}
         </p>
         <div class="ext-actions">
-          ${installed ? `
+          ${installed ? ` 
             <button onclick="uninstallExtension('${ext.id}')">Uninstall</button>
-          ` : `
+          ` : ` 
             <button onclick="installExtension('${ext.url}', '${ext.id}')">Install</button>
           `}
         </div>
@@ -266,123 +292,89 @@ async function loadExtensions() {
 
 
 
+      function filterAndRender() {
+        const search = searchInput.value.toLowerCase();
+        if (installedContainer.style.display !== "none") {
+          renderExtensions(installedEl, local.filter(e => e.name.toLowerCase().includes(search)), true);
+        }
+        if (availableContainer.style.display !== "none") {
+          renderExtensions(availableEl, remote.filter(e => e.name.toLowerCase().includes(search) && !local.some(i => i.id === e.id)), false);
+        }
+      }
 
+      searchInput.addEventListener("input", filterAndRender);
 
-  function filterAndRender() {
-    const search = searchInput.value.toLowerCase();
-    if (installedContainer.style.display !== "none") {
-      renderExtensions(installedEl, local.filter(e => e.name.toLowerCase().includes(search)), true);
+      showInstalledBtn.addEventListener("click", () => {
+        installedContainer.style.display = "block";
+        availableContainer.style.display = "none";
+        showInstalledBtn.classList.add("active");
+        showAvailableBtn.classList.remove("active");
+        filterAndRender();
+      });
+
+      showAvailableBtn.addEventListener("click", () => {
+        installedContainer.style.display = "none";
+        availableContainer.style.display = "block";
+        showAvailableBtn.classList.add("active");
+        showInstalledBtn.classList.remove("active");
+        filterAndRender();
+      });
+
+      showInstalledBtn.classList.add("active");
+      renderExtensions(installedEl, local, true);
+      renderExtensions(availableEl, remote.filter(e => !local.some(i => i.id === e.id)), false);
     }
-    if (availableContainer.style.display !== "none") {
-      renderExtensions(availableEl, remote.filter(e => e.name.toLowerCase().includes(search) && !local.some(i => i.id === e.id)), false);
+
+    async function installExtension(url, id) {
+      try {
+        const res = await fetch("http://localhost:3000/extensions/install", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url, id })
+        });
+        const result = await res.json();
+        showCustomPopup(result.message);
+        setTimeout(() => loadExtensions(), 500);
+      } catch (err) {
+        console.error("Failed to install extension:", err);
+      }
     }
-  }
 
-  searchInput.addEventListener("input", filterAndRender);
+    async function uninstallExtension(id) {
+      try {
+        const res = await fetch("http://localhost:3000/extensions/uninstall", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id })
+        });
+        const result = await res.json();
+        showCustomPopup(result.message);
+        loadExtensions();
+      } catch (err) {
+        console.error("Failed to uninstall extension:", err);
+      }
+    }
 
-  showInstalledBtn.addEventListener("click", () => {
-    installedContainer.style.display = "block";
-    availableContainer.style.display = "none";
-    showInstalledBtn.classList.add("active");
-    showAvailableBtn.classList.remove("active");
-    filterAndRender();
-  });
+    function showCustomPopup(message) {
+      const popup = document.getElementById("popup");
+      const popupMessage = document.getElementById("popupMessage");
 
-  showAvailableBtn.addEventListener("click", () => {
-    installedContainer.style.display = "none";
-    availableContainer.style.display = "block";
-    showAvailableBtn.classList.add("active");
-    showInstalledBtn.classList.remove("active");
-    filterAndRender();
-  });
+      popupMessage.textContent = message;
+      popup.classList.remove("hidden");
+      popup.classList.add("show");
 
+      setTimeout(() => {
+        popup.classList.remove("show");
+        setTimeout(() => popup.classList.add("hidden"), 300);
+      }, 6000);
+    }
 
-  showInstalledBtn.classList.add("active");
-  renderExtensions(installedEl, local, true);
-  renderExtensions(availableEl, remote.filter(e => !local.some(i => i.id === e.id)), false);
-}
-
-async function installExtension(url, id) {
-  try {
-    const res = await fetch("http://localhost:3000/extensions/install", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ url, id })
-    });
-
-    const result = await res.json();
-    showCustomPopup(result.message);
-
-    // Wait 500ms before reloading
-    setTimeout(() => {
-      remote = remote.filter(e => e.id !== id);
-loadExtensions();
-
-    }, 500);
-  } catch (err) {
-    console.error("Failed to install extension:", err);
-  }
-}
-
-
-async function uninstallExtension(id) {
-  try {
-    const res = await fetch("http://localhost:3000/extensions/uninstall", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ id })
-    });
-
-    const result = await res.json();
-    showCustomPopup(result.message);
-        loadExtensions(); // Refresh list
-  } catch (err) {
-    console.error("Failed to uninstall extension:", err);
-  }
-}
-
-
-async function disableExtension(id) {
-  try {
-    const res = await fetch("http://localhost:3000/extensions/disable", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ id })
-    });
-
-    const result = await res.json();
-    showCustomPopup(result.message || `Extension ${id} disabled.`);
-    loadExtensions(); // Optional refresh
-  } catch (err) {
-    console.error("Failed to disable extension:", err);
-  }
-}
-
-
-loadExtensions();
-function showCustomPopup(message) {
-  const popup = document.getElementById("popup");
-  const popupMessage = document.getElementById("popupMessage");
-
-  popupMessage.textContent = message;
-  popup.classList.remove("hidden");
-  popup.classList.add("show");
-
-  setTimeout(() => {
-    popup.classList.remove("show");
-    setTimeout(() => popup.classList.add("hidden"), 300);
-  }, 6000);
-}
+    loadExtensions();
   </script>
-.
+
   <script src="../js/swiper-bundle.min.js"></script>
   <script src="../js/script.js"></script>
   <script src="../js/event.js"></script>
+
 </body>
 </html>

@@ -14,7 +14,7 @@ export function register({ require }) {
   if (!clientId) {
     globalThis.sendFrontendMessage?.({
       type: 'error',
-      message: '[Discord RPC] Failed (Missing DISCORD_CLIENT_ID)',
+      message: '[Discord RPC] Failed (Current Version Of FS is not Supported !)',
     });
     return;
   }
