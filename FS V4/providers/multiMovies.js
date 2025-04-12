@@ -38,7 +38,7 @@ function normalizeMultiMovies(item) {
 }
 
 export async function fetchCatalog(filter) {
-  const url = `https://multimovies.guru${filter}?page=1`;
+  const url = `https://multimovies.press${filter}?page=1`;
   const cached = cacheGet(url);
   if (cached) return cached;
 
@@ -62,7 +62,7 @@ export async function fetchCatalog(filter) {
 }
 
 export async function search(query) {
-  const url = `https://multimovies.guru/?s=${encodeURIComponent(query)}`;
+  const url = `https://multimovies.press/?s=${encodeURIComponent(query)}`;
   const cached = cacheGet(url);
   if (cached) return cached;
 
