@@ -1,6 +1,6 @@
 {
     "name": "fusionstream",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "description": "FusionStream is a streaming desktop app that fetches anime and movies using web scraping.",
     "main": "main.js",
     "type": "module",

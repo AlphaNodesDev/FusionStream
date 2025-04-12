@@ -58,9 +58,9 @@ function createWindow() {
     width: 1000,
     height: 800,
     icon: path.join(__dirname, 'logo.png'),
-  // frame: false,
- //  titleBarStyle: 'hiddenInset',
-   // backgroundColor: '#000000',
+   frame: false,
+  titleBarStyle: 'hiddenInset',
+    backgroundColor: '#000000',
    webPreferences: {
     preload: path.join(__dirname, 'preload.js'),
     contextIsolation: false,
@@ -74,31 +74,68 @@ function createWindow() {
   enable(win.webContents);
 
  
- //win.setMenu(null);
+ win.setMenu(null);
 
   win.loadFile(path.join(__dirname, './assets/resources/res/UI/index.html'));
 }
 
+
+
+import { createRequire } from 'module';
+const appRequire = createRequire(import.meta.url);
+
 async function loadExtensions({ electronApp, expressApp }) {
-  const extensionsDir = path.join(__dirname, 'extensions');
-  if (!fs.existsSync(extensionsDir)) return;
+  const extensionsDir = path.join(electronApp.getPath('userData'), 'extensions');
+
+  if (!fs.existsSync(extensionsDir)) {
+    fs.mkdirSync(extensionsDir, { recursive: true });
+  }
 
   const files = fs.readdirSync(extensionsDir).filter(f => f.endsWith('.js'));
 
   for (const file of files) {
+    const filePath = path.join(extensionsDir, file);
+    let pluginName = path.basename(file, '.js');
+
     try {
-      const modulePath = pathToFileURL(path.join(extensionsDir, file)).href;
-      const mod = await import(modulePath);
+      const raw = fs.readFileSync(filePath, 'utf-8');
+      const nameMatch = /export\s+const\s+name\s*=\s*['"`](.*?)['"`]/.exec(raw);
+      if (nameMatch) {
+        pluginName = nameMatch[1];
+      }
+    } catch (e) {
+      console.warn(`⚠️ Failed to read ${file} to extract plugin name`, e);
+    }
+
+    try {
+      // ✅ Dynamically import the extension (ESM safe)
+      const mod = await import(`file://${filePath}`);
 
       if (typeof mod.register === 'function') {
-        mod.register({ electronApp, expressApp });
-        console.log(`✅ Loaded extension: ${file}`);
+        mod.register({
+          electronApp,
+          expressApp,
+          require: (moduleName) => {
+            try {
+              return createRequire(filePath)(moduleName); // try local to plugin
+            } catch {
+              return appRequire(moduleName); // fallback to app
+            }
+          }
+        });
+        console.log(`✅ Loaded extension: ${pluginName}`);
       } else {
-        console.warn(`⚠️ Extension ${file} does not export 'register'`);
+        console.warn(`⚠️ Extension ${pluginName} does not export 'register'`);
       }
-
     } catch (err) {
-      console.error(`❌ Failed to load extension ${file}:`, err);
+      console.error(`❌ Failed to load extension ${pluginName}:`, err);
+
+      setTimeout(() => {
+        globalThis.sendFrontendMessage?.({
+          type: 'error',
+          message: `[Plugins] Failed to load plugin: ${pluginName}`,
+        });
+      }, 1000);
     }
   }
 }

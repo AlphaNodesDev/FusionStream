@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   const changelogPre = document.getElementById('changelogContent');
   const downloadUpdate = document.getElementById('downloadUpdate');
 
-  const currentVersion = '1.0.4';
+  const currentVersion = '1.0.5';
  
   document.getElementById('closeModal').onclick = () => updateModal.style.display = 'none';
   document.getElementById('closeNews').onclick = () => newsModal.style.display = 'none';

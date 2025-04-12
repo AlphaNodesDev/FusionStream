@@ -1,36 +1,55 @@
-const popup = document.getElementById('popup');
-const popupMessage = document.getElementById('popupMessage');
+const popupQueue = [];
+let isPopupShowing = false;
 
 function showPopup({ message = 'No message', type = 'info' }) {
-    const container = document.getElementById('popup-container');
-    const div = document.createElement('div');
-    div.className = `popup ${type}`;
+  popupQueue.push({ message, type });
+  if (!isPopupShowing) {
+    processNextPopup();
+  }
+}
 
-    div.innerHTML = `
-      <div class="popup-content">
-        <span>${message}</span>
-      </div>
-    `;
-
-    container.appendChild(div);
-
-    // Show popup
-    setTimeout(() => div.classList.add('show'), 100);
-
-    // Auto-hide
-    setTimeout(() => {
-      div.classList.remove('show');
-      setTimeout(() => div.remove(), 300);
-    }, 5000);
+function processNextPopup() {
+  if (popupQueue.length === 0) {
+    isPopupShowing = false;
+    return;
   }
 
-  const eventSource = new EventSource('http://localhost:3000/events'); // Change port if needed
+  isPopupShowing = true;
 
-  eventSource.onmessage = function (event) {
-    try {
-      const data = JSON.parse(event.data);
-      showPopup(data);
-    } catch (e) {
-      console.warn("Invalid message from server:", event.data);
-    }
-  };
+  const { message, type } = popupQueue.shift();
+  const container = document.getElementById('popup-container');
+  const div = document.createElement('div');
+  div.className = `popup ${type}`;
+
+  div.innerHTML = `
+    <div class="popup-content">
+      <span>${message}</span>
+    </div>
+  `;
+
+  container.appendChild(div);
+
+  // Show popup
+  setTimeout(() => div.classList.add('show'), 100);
+
+  // Auto-hide and process next
+  setTimeout(() => {
+    div.classList.remove('show');
+    setTimeout(() => {
+      div.remove();
+      processNextPopup(); // 🟢 Show next popup
+    }, 300);
+  }, 5000);
+}
+
+// EventSource for server-sent events
+const eventSource = new EventSource('http://localhost:3000/events');
+
+eventSource.onmessage = function (event) {
+  try {
+    const data = JSON.parse(event.data);
+    showPopup(data); // Will queue instead of showing instantly
+  } catch (e) {
+    console.warn("Invalid message from server:", event.data);
+  }
+};

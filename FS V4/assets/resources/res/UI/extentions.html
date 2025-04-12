@@ -138,6 +138,8 @@
 
 
 </style>
+
+
 </head>
 <body>
   <div id="popup" class="popup hidden">
@@ -200,13 +202,16 @@
   return (a3 || 0) - (b3 || 0);
 }
 
+let local = [];
+let remote = [];
+
 async function loadExtensions() {
   const installedEl = document.getElementById("installedExtensions");
   const availableEl = document.getElementById("availableExtensions");
   const searchInput = document.getElementById("searchBox");
 
-  let local = [];
-  let remote = [];
+  local = [];
+  remote = [];
 
   try {
     const localRes = await fetch("http://localhost:3000/extensions");
@@ -309,11 +314,18 @@ async function installExtension(url, id) {
 
     const result = await res.json();
     showCustomPopup(result.message);
-    loadExtensions(); // Refresh list
+
+    // Wait 500ms before reloading
+    setTimeout(() => {
+      remote = remote.filter(e => e.id !== id);
+loadExtensions();
+
+    }, 500);
   } catch (err) {
     console.error("Failed to install extension:", err);
   }
 }
+
 
 async function uninstallExtension(id) {
   try {

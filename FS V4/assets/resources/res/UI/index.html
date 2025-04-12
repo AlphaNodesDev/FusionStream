@@ -37,6 +37,19 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+.view-more-button {
+  background-color: #444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.view-more-button:hover {
+  background-color: #666;
+}
 
   </style>
 </head>
@@ -101,9 +114,8 @@
       </div>
     </div>
   </header>
-
+<div id="scroll-container">
   <!-- Catalog Display -->
-   <div class="copyright"></div>
    <section class="movies container" id="catalogSection">
     <div id="loader" style="display: none; width: 100%; text-align: center; padding: 2rem;">
       <div style="
@@ -124,6 +136,7 @@
     
   </section>
   <div class="copyright"></div>
+</div>
   <!-- Core JS Logic (your existing backend fetching/search logic) -->
   <script>
     const providerSelect = document.getElementById('providerSelect');
@@ -239,36 +252,58 @@ async function loadCatalog() {
 }
 
 
-    function renderSection(title, items) {
-      const section = document.createElement('div');
-      const heading = document.createElement('h2');
-      heading.textContent = title.charAt(0).toUpperCase() + title.slice(1);
-      section.appendChild(heading);
+function renderSection(title, items) {
+  const maxVisible = 6; // Show only this many cards initially
 
-      const list = document.createElement('div');
-      list.className = 'movie-grid';
+  const section = document.createElement('div');
+  const heading = document.createElement('h2');
+  heading.textContent = title.charAt(0).toUpperCase() + title.slice(1);
+  section.appendChild(heading);
 
-      items.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'movie-card';
-        card.innerHTML = `
-          <img src="${item.thumbnail}" alt="${item.title}" />
-          <p class="card-title">${item.title}</p>
-        `;
+  const list = document.createElement('div');
+  list.className = 'movie-grid';
 
-        card.addEventListener('click', () => {
-          const provider = providerSelect.value;
-          const url = `info.html?provider=${provider}&id=${encodeURIComponent(item.id)}`;
-          window.location.href = url;
-        });
+  items.slice(0, maxVisible).forEach(item => {
+    const card = createCard(item);
+    list.appendChild(card);
+  });
 
-        list.appendChild(card);
-      });
+  section.appendChild(list);
 
-      section.appendChild(list);
-      catalogContainer.appendChild(section);
-    }
+  // If there are more than maxVisible items, show "View More"
+  if (items.length > maxVisible) {
+    const viewMore = document.createElement('button');
+    viewMore.textContent = 'View More';
+    viewMore.className = 'view-more-button';
+    viewMore.style.marginTop = '10px';
 
+    viewMore.addEventListener('click', () => {
+      list.innerHTML = ''; // Clear existing
+      items.forEach(item => list.appendChild(createCard(item)));
+      viewMore.remove(); // Remove the button
+    });
+
+    section.appendChild(viewMore);
+  }
+
+  catalogContainer.appendChild(section);
+}
+function createCard(item) {
+  const card = document.createElement('div');
+  card.className = 'movie-card';
+  card.innerHTML = `
+    <img src="${item.thumbnail}" alt="${item.title}" />
+    <p class="card-title">${item.title}</p>
+  `;
+
+  card.addEventListener('click', () => {
+    const provider = providerSelect.value;
+    const url = `info.html?provider=${provider}&id=${encodeURIComponent(item.id)}`;
+    window.location.href = url;
+  });
+
+  return card;
+}
     providerSelect.addEventListener('change', loadCatalog);
     loadProviders();
   </script>

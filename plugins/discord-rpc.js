@@ -1,121 +1,110 @@
-import RPC from 'discord-rpc';
-import dotenv from 'dotenv';
-
-dotenv.config(); 
+// 🔄 NO top-level imports here!
 
 export const name = "Discord Rich Presence";
 export const version = "1.0.0";
 export const description = "Enables Discord Rich Presence while watching.";
-export const image = "https://i.ibb.co/bgwNyMH4/8b81eb984a67f6652e430b88962a1bd4.jpg"; // small icon (app logo)
+export const image = "https://i.ibb.co/bgwNyMH4/8b81eb984a67f6652e430b88962a1bd4.jpg";
 
-export function register() {
+export function register({ require }) {
+  const RPC = require('discord-rpc');
+  const dotenv = require('dotenv');
+  dotenv.config();
+
   const clientId = process.env.DISCORD_CLIENT_ID;
   if (!clientId) {
-    console.warn("[Discord RPC] Client ID not found in .env");
+    globalThis.sendFrontendMessage?.({
+      type: 'error',
+      message: '[Discord RPC] Failed (Missing DISCORD_CLIENT_ID)',
+    });
     return;
   }
 
   const client = new RPC.Client({ transport: 'ipc' });
 
-  client.login({ clientId }).catch(err => {
-    console.error("[Discord RPC] Failed to login:", err);
+  client.login({ clientId }).catch(() => {
+    globalThis.sendFrontendMessage?.({
+      type: 'error',
+      message: '[Discord RPC] Failed to login.',
+    });
   });
 
   client.on('ready', () => {
     setIdlePresence();
-    let lastInfoCache = null; // 🔹 Cache latest /info response
 
+    let lastInfoCache = null;
     const originalFetch = globalThis.fetch;
-    
+
     globalThis.fetch = async (...args) => {
       const [url] = args;
-    
+
       if (typeof url === 'string') {
-        // 🔹 Intercept /info and cache it
         if (url.includes('/info')) {
           try {
             const response = await originalFetch(...args);
             const cloned = response.clone();
             const json = await cloned.json();
-    
-            if (json?.title) {
-              lastInfoCache = json;
-            }
-    
+            if (json?.title) lastInfoCache = json;
             return response;
           } catch (err) {
-            console.warn('[Rich Presence Intercept] Failed to fetch info:', err);
+            console.warn('[RPC] /info fetch fail:', err);
           }
         }
-    
-        // 🔹 Intercept /watch and use the cached info
+
         if (url.includes('/watch')) {
           try {
             const urlObj = new URL(url, 'http://localhost');
             const episodeId = urlObj.searchParams.get('episodeId');
-    
             const response = await originalFetch(...args);
             const cloned = response.clone();
-            await cloned.json(); // ignore actual streamData
-    
-            // Use previously cached info to set presence
-            if (lastInfoCache && lastInfoCache.episodes) {
+            await cloned.json();
+
+            if (lastInfoCache?.episodes) {
               const episode = lastInfoCache.episodes.find(ep => ep.id === episodeId || ep.url?.includes(episodeId));
-    
               updateDiscordPresence({
                 animeTitle: lastInfoCache.title,
                 episodeTitle: episode?.title || 'Episode',
                 thumbnail: lastInfoCache.thumbnail || lastInfoCache.image,
-                largeImageKey: 'anime_thumb',
-                largeImageText: `Watching ${lastInfoCache.title}`,
-                smallImageKey: 'logo',
-                smallImageText: 'Enjoying the show!',
               });
-              
             }
-    
+
             return response;
           } catch (err) {
-            console.warn('[Rich Presence Intercept] Failed during /watch processing:', err);
+            console.warn('[RPC] /watch processing fail:', err);
           }
         }
       }
-    
+
       return originalFetch(...args);
     };
-    
-    
   });
 
-  // 💡 Dynamically update the Discord status
   globalThis.updateDiscordPresence = function ({ animeTitle, episodeTitle, thumbnail }) {
     if (!client) return;
     client.setActivity({
       details: `Watching ${animeTitle}`,
       state: episodeTitle,
       startTimestamp: Date.now(),
-      largeImageKey: thumbnail, // ✅ Dynamic thumbnail
+      largeImageKey: thumbnail,
       largeImageText: animeTitle,
-      smallImageKey: 'https://i.ibb.co/tptvZjMB/Chat-GPT-Image-Apr-9-2025-12-21-01-PM.png', // ✅ Your app logo (must be pre-configured in Discord Dev portal)
+      smallImageKey: 'https://i.ibb.co/tptvZjMB/Chat-GPT-Image-Apr-9-2025-12-21-01-PM.png',
       smallImageText: 'Streaming via MyApp',
       instance: false,
-      type: 3 // Streaming
+      type: 3,
     });
   };
 
-  // 👋 Idle state (browsing)
   function setIdlePresence() {
     if (!client) return;
     client.setActivity({
       details: 'Browsing',
       state: 'In the app',
       startTimestamp: Date.now(),
-      largeImageKey: 'https://i.ibb.co/tptvZjMB/Chat-GPT-Image-Apr-9-2025-12-21-01-PM.png', // show logo as main
+      largeImageKey: 'https://i.ibb.co/tptvZjMB/Chat-GPT-Image-Apr-9-2025-12-21-01-PM.png',
       largeImageText: 'Browsing',
       smallImageKey: 'https://i.ibb.co/tptvZjMB/Chat-GPT-Image-Apr-9-2025-12-21-01-PM.png',
       smallImageText: 'Idle Mode',
       instance: false,
-      type: 0
+      type: 0,
     });
   }
 }
