@@ -149,43 +149,62 @@
     }
   }
   function renderEpisodes(episodes, provider) {
-  const container = document.getElementById("episode-buttons");
+    const container = document.getElementById("episode-buttons");
 
-  if (!Array.isArray(episodes) || episodes.length === 0) {
-    container.innerHTML = "<p>No episodes available.</p>";
-    return;
-  }
+    if (!Array.isArray(episodes) || episodes.length === 0) {
+      container.innerHTML = "<p>No episodes available.</p>";
+      return;
+    }
 
-  console.log(`Rendering ${episodes.length} episodes`);
+    console.log(`Rendering episodes grouped by season`);
 
-  container.innerHTML = ""; // Clear before adding new buttons
+    container.innerHTML = ""; // Clear container
 
-  episodes.forEach((ep, index) => {
-    const epNum = ep.number || index + 1;
-    const rawId = ep.id || ep.url || ep.video || epNum;
-    const titleText = ep.title || `Episode ${epNum}`;
+    // Group episodes by season title
+    const seasonsMap = {};
 
-    const button = document.createElement("button");
-    button.textContent = `Episode ${epNum}`;
-    button.title = titleText; // 👈 Adds the hover tooltip!
-    button.dataset.episodeId = rawId;
-    button.dataset.title = titleText;
-    button.dataset.provider = provider;
-
-    console.log(`Tooltip title for Episode ${epNum}:`, titleText);
-
-    button.addEventListener("click", () => {
-      const epId = encodeURIComponent(button.dataset.episodeId);
-      const title = encodeURIComponent(button.dataset.title);
-      const provider = encodeURIComponent(button.dataset.provider);
-      const url = `player.html?episodeId=${epId}&title=${title}&provider=${provider}`;
-      window.location.href = url;
+    episodes.forEach((ep) => {
+      const seasonTitle = ep.season || "Season 1";
+      if (!seasonsMap[seasonTitle]) {
+        seasonsMap[seasonTitle] = [];
+      }
+      seasonsMap[seasonTitle].push(ep);
     });
 
-    container.appendChild(button);
-  });
-}
+    for (const [season, seasonEpisodes] of Object.entries(seasonsMap)) {
+      const seasonDiv = document.createElement("div");
+      seasonDiv.classList.add("season-block");
 
+      const title = document.createElement("h3");
+      title.textContent = season;
+      seasonDiv.appendChild(title);
+
+      seasonEpisodes.forEach((ep, index) => {
+        const epNum = ep.number || index + 1;
+        const rawId = ep.id || ep.url || ep.video || epNum;
+        const titleText = ep.title || `Episode ${epNum}`;
+
+        const button = document.createElement("button");
+        button.textContent = `Episode ${epNum}`;
+        button.title = titleText;
+        button.dataset.episodeId = rawId;
+        button.dataset.title = titleText;
+        button.dataset.provider = provider;
+
+        button.addEventListener("click", () => {
+          const epId = encodeURIComponent(button.dataset.episodeId);
+          const title = encodeURIComponent(button.dataset.title);
+          const prov = encodeURIComponent(button.dataset.provider);
+          const url = `player.html?episodeId=${epId}&title=${title}&provider=${prov}`;
+          window.location.href = url;
+        });
+
+        seasonDiv.appendChild(button);
+      });
+
+      container.appendChild(seasonDiv);
+    }
+  }
 
   loadInfo();
 </script>

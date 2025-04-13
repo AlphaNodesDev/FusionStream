@@ -144,13 +144,7 @@
 </head>
 <body>
 
-  <!-- Popup Notification -->
-  <div id="popup" class="popup hidden">
-    <div class="popup-content">
-      <span id="popupMessage">Action completed</span>
-    </div>
-  </div>
-
+  <div id="popup-container"></div>
   <!-- Custom Titlebar -->
   <div id="custom-titlebar">
     <div class="title">
@@ -326,48 +320,32 @@
     }
 
     async function installExtension(url, id) {
-      try {
-        const res = await fetch("http://localhost:3000/extensions/install", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, id })
-        });
-        const result = await res.json();
-        showCustomPopup(result.message);
-        setTimeout(() => loadExtensions(), 500);
-      } catch (err) {
-        console.error("Failed to install extension:", err);
-      }
-    }
+  try {
+    await fetch("http://localhost:3000/extensions/install", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, id })
+    });
+    setTimeout(() => loadExtensions(), 500);
+  } catch (err) {
+    console.error("Failed to install extension:", err);
+  }
+}
 
-    async function uninstallExtension(id) {
-      try {
-        const res = await fetch("http://localhost:3000/extensions/uninstall", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id })
-        });
-        const result = await res.json();
-        showCustomPopup(result.message);
-        loadExtensions();
-      } catch (err) {
-        console.error("Failed to uninstall extension:", err);
-      }
-    }
+async function uninstallExtension(id) {
+  try {
+    await fetch("http://localhost:3000/extensions/uninstall", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    });
+    loadExtensions();
+  } catch (err) {
+    console.error("Failed to uninstall extension:", err);
+  }
+}
 
-    function showCustomPopup(message) {
-      const popup = document.getElementById("popup");
-      const popupMessage = document.getElementById("popupMessage");
 
-      popupMessage.textContent = message;
-      popup.classList.remove("hidden");
-      popup.classList.add("show");
-
-      setTimeout(() => {
-        popup.classList.remove("show");
-        setTimeout(() => popup.classList.add("hidden"), 300);
-      }, 6000);
-    }
 
     loadExtensions();
   </script>

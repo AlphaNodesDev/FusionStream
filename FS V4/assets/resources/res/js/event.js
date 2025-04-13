@@ -21,11 +21,19 @@ function processNextPopup() {
   const div = document.createElement('div');
   div.className = `popup ${type}`;
 
+  const iconMap = {
+    info: 'ℹ️',
+    success: '✅',
+    error: '❌',
+  };
+  
   div.innerHTML = `
     <div class="popup-content">
-      <span>${message}</span>
+      <span class="popup-icon">${iconMap[type] || 'ℹ️'}</span>
+      <span class="popup-message">${message}</span>
     </div>
   `;
+  
 
   container.appendChild(div);
 

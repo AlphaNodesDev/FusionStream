@@ -31,41 +31,70 @@ export default function (api) {
     res.json(extensions.filter(Boolean));
   });
 
-  // Install new extension
   api.post('/extensions/install', async (req, res) => {
     let { url, id } = req.body;
     id = id.replace(/\.js$/, '');
     const filePath = path.join(extensionsDir, `${id}.js`);
-
+  
     try {
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const code = await response.text();
       fs.writeFileSync(filePath, code, 'utf-8');
-
-      let extInfo = id;
+  
+      let pluginName = id;
       try {
         const mod = await import(pathToFileURL(filePath).href + `?cacheBust=${Date.now()}`);
-        extInfo = mod?.name || id;
+        pluginName = mod?.name || id;
       } catch {}
-
-      res.json({ success: true, message: `${extInfo} installed successfully.` });
+  
+      globalThis.sendFrontendMessage?.({
+        type: 'info',
+        message: `[plugin] installed: ${pluginName}`,
+      });
+  
+      res.json({ success: true });
     } catch (err) {
       console.error("Install failed:", err);
-      res.status(500).json({ success: false, message: 'Failed to install extension.' });
+      globalThis.sendFrontendMessage?.({
+        type: 'error',
+        message: `[plugin] failed to install: ${id}`,
+      });
+      res.status(500).json({ success: false });
     }
   });
-
-  // Uninstall extension
   api.post('/extensions/uninstall', async (req, res) => {
     const id = req.body.id.replace(/\.js$/, '');
     const filePath = path.join(extensionsDir, `${id}.js`);
-
+  
     if (fs.existsSync(filePath)) {
+      let pluginName = id;
+      try {
+        // Try importing the plugin file to get the name
+        const mod = await import(pathToFileURL(filePath).href + `?cacheBust=${Date.now()}`);
+        pluginName = mod?.name || id;
+      } catch (e) {
+        console.warn("Could not extract plugin name during uninstall:", e.message);
+      }
+  
+      // Delete the plugin file
       fs.unlinkSync(filePath);
-      res.json({ success: true, message: `Extension "${id}" uninstalled.` });
+  
+      globalThis.sendFrontendMessage?.({
+        type: 'success',
+        message: `[plugin] uninstalled: ${pluginName}`,
+      });
+  
+      res.json({ success: true });
     } else {
-      res.status(404).json({ success: false, message: 'Extension not found.' });
+      globalThis.sendFrontendMessage?.({
+        type: 'error',
+        message: `[plugin] not found: ${id}`,
+      });
+  
+      res.status(404).json({ success: false });
     }
   });
+  
+  
 }

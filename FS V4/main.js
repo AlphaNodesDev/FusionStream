@@ -120,13 +120,14 @@ export async function loadExtensions({ electronApp, expressApp }) {
         });
         loadedExtensions.push({ name: pluginName, unregister: mod.unregister });
         console.log(`✅ Loaded extension: ${pluginName}`);
+        
       } else {
         console.warn(`⚠️ Extension ${pluginName} does not export 'register'`);
       }
     } catch (err) {
-      console.error(`❌ Failed to load extension: ${pluginName}`, err);
+      console.error(`Failed to load extension: ${pluginName}`, err);
       globalThis.sendFrontendMessage?.({
-        type: 'error',
+        type: 'info',
         message: `[Extensions] Failed to load plugin: ${pluginName}`,
       });
     }

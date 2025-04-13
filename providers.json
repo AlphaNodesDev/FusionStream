@@ -10,7 +10,7 @@
       "link": "https://multimovies.guru"
     },
     "dramacool":{
-      "enable": true,
+      "enable": false,
       "displayname": "V2 (TV Series)",
       "link": "https://consumet.8man.me/movies/dramacool"
     }

@@ -145,10 +145,12 @@ export async function fetchInfo(id) {
         id: ep.link,
         title: ep.title || `Episode ${idx + 1}`,
         number: idx + 1,
+        season: season.title, // 👈 add this!
         image: info.image,
         url: ep.link
       }))
     );
+    
 
     return {
       id,
