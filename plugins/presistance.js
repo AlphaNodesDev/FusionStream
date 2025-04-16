@@ -65,7 +65,7 @@ export function register({ electronApp }) {
 
             const copyrightDiv = document.createElement('div');
             copyrightDiv.className = 'copyright';
-            copyrightDiv.textContent = 'Test';
+            copyrightDiv.textContent = 'Presistance V1.0.3';
 
             const historySection = document.createElement('div');
             historySection.setAttribute('bis_skin_checked', '1');
