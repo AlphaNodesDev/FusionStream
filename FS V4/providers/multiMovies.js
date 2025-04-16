@@ -201,90 +201,119 @@ function getLangFromUrl(url) {
 
   return langMap[code] || code.toUpperCase();
 }
-export async function multiGetStream(url) {
+async function multiGetStream(url) {
   console.log('🎯 Launching Puppeteer to fetch page:', url);
   let browser;
   const interceptedStreams = [];
   const subtitleList = [];
 
-  try {
-    browser = await puppeteer.launch({ headless: true });
-    const page = await browser.newPage();
+  const MAX_RETRIES = 5;
+  let attempt = 0;
 
-    await page.setRequestInterception(true);
-    page.on('request', (req) => {
-      const reqUrl = req.url();
+  // Retry loop to attempt the fetch up to MAX_RETRIES times
+  while (attempt < MAX_RETRIES) {
+    try {
+      attempt++;
+      console.log(`🚀 Attempt ${attempt} to fetch stream: ${url}`);
 
-      // 🎬 Intercept stream files
-      if (reqUrl.includes('.m3u8')) {
-        let quality = 'default';
-        const match = reqUrl.match(/index-(f\d+)-v\d+-a\d+\.m3u8/);
-        if (match) {
-          const qualityCode = match[1];
-          const qualities = {
-            f1: '360p',
-            f2: '480p',
-            f3: '720p',
-            f4: '1080p'
-          };
-          quality = qualities[qualityCode] || 'auto';
-        } else if (reqUrl.includes('master.m3u8')) {
-          quality = 'auto';
+      browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-gpu',
+          '--window-size=1280x720', // Lower resolution for low-end devices
+          '--disable-images', // Disable images to save resources
+          '--disable-css', // Disable CSS to speed up rendering
+          '--disable-fonts', // Disable fonts
+          '--disable-software-rasterizer', // Disable software rasterizer to save resources
+          '--disable-web-security', // Reduce resource usage
+          '--ignore-certificate-errors', // Ignore certificate errors
+        ]
+      });
+
+      const page = await browser.newPage();
+
+      await page.setRequestInterception(true);
+      page.on('request', (req) => {
+        const reqUrl = req.url();
+
+        // 🎬 Intercept stream files
+        if (reqUrl.includes('.m3u8')) {
+          let quality = 'default';
+          const match = reqUrl.match(/index-(f\d+)-v\d+-a\d+\.m3u8/);
+          if (match) {
+            const qualityCode = match[1];
+            const qualities = {
+              f1: '360p',
+              f2: '480p',
+              f3: '720p',
+              f4: '1080p'
+            };
+            quality = qualities[qualityCode] || 'auto';
+          } else if (reqUrl.includes('master.m3u8')) {
+            quality = 'auto';
+          }
+
+          console.log(`📡 Intercepted stream: ${reqUrl} (Quality: ${quality})`);
+          interceptedStreams.push({
+            server: 'Multi',
+            link: reqUrl,
+            type: 'm3u8',
+            quality,
+            subtitles: [] // Will be filled later
+          });
         }
 
-        console.log(`📡 Intercepted stream: ${reqUrl} (Quality: ${quality})`);
-        interceptedStreams.push({
-          server: 'Multi',
-          link: reqUrl,
-          type: 'm3u8',
-          quality,
-          subtitles: [] // Will be filled later
-        });
+        // 📝 Intercept subtitles
+        if (reqUrl.endsWith('.vtt') || reqUrl.endsWith('.srt')) {
+          console.log(`📝 Found subtitle: ${reqUrl}`);
+          subtitleList.push({
+            url: reqUrl,
+            lang: getLangFromUrl(reqUrl)
+          });
+        }
+
+        req.continue();
+      });
+
+      await page.goto(url, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('iframe', { timeout: 10000 });
+
+      const iframeUrl = await page.evaluate(() => {
+        const iframe = document.querySelector('iframe');
+        return iframe?.src || null;
+      });
+
+      if (!iframeUrl) throw new Error('No iframe found');
+
+      await page.goto(iframeUrl, { waitUntil: 'networkidle2' });
+
+      // Wait for requests to finish
+      await new Promise(resolve => setTimeout(resolve, 5000));
+
+      if (!interceptedStreams.length) {
+        throw new Error('No stream URLs intercepted');
       }
 
-      // 📝 Intercept subtitles
-      if (reqUrl.endsWith('.vtt') || reqUrl.endsWith('.srt')) {
-        console.log(`📝 Found subtitle: ${reqUrl}`);
-        subtitleList.push({
-          url: reqUrl,
-          lang: getLangFromUrl(reqUrl)
-        });
+      // 🔗 Attach subtitles to the first stream (or spread to all if you want)
+      interceptedStreams[0].subtitles = subtitleList;
+
+      return interceptedStreams;
+    } catch (err) {
+      console.error(`⚠️ Attempt ${attempt} failed:`, err.message);
+      if (attempt < MAX_RETRIES) {
+        console.log(`⏳ Retrying... (Attempt ${attempt + 1})`);
+        continue; // Retry the request
+      } else {
+        console.error('❌ Failed after multiple attempts');
+        return [];
       }
-
-      req.continue();
-    });
-
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('iframe', { timeout: 10000 });
-
-    const iframeUrl = await page.evaluate(() => {
-      const iframe = document.querySelector('iframe');
-      return iframe?.src || null;
-    });
-
-    if (!iframeUrl) throw new Error('No iframe found');
-
-    await page.goto(iframeUrl, { waitUntil: 'networkidle2' });
-
-    // Wait for requests to finish
-    await new Promise(resolve => setTimeout(resolve, 5000));
-
-    if (!interceptedStreams.length) {
-      throw new Error('No stream URLs intercepted');
+    } finally {
+      if (browser) await browser.close();
     }
-
-    // 🔗 Attach subtitles to the first stream (or spread to all if you want)
-    interceptedStreams[0].subtitles = subtitleList;
-
-    return interceptedStreams;
-  } catch (err) {
-    console.error('⚠️ multiGetStream() failed:', err.message);
-    return [];
-  } finally {
-    if (browser) await browser.close();
   }
 }
-
 
 export async function watch(episodeId) {
   console.log("🎬 Starting stream fetch for:", episodeId);

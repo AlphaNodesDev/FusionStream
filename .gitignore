@@ -12,4 +12,6 @@
 /FS V4/dist
 /FS V4/build
 .env
+/Android
+/FS V2/my-proxy-server
 

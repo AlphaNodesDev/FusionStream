@@ -1,0 +1,49 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Clean Cordova",
+        "type": "process",
+        "command": "cmd",
+        "args": ["/c", "cordova clean"],
+        "options": {
+          "cwd": "Android/fusionstream"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Build Cordova (Android)",
+        "type": "process",
+        "command": "cmd",
+        "args": ["/c", "cordova build android"],
+        "options": {
+          "cwd": "Android/fusionstream"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Install APK via ADB",
+        "type": "process",
+        "command": "cmd",
+        "args": ["/c", "adb install -r platforms/android/app/build/outputs/apk/debug/app-debug.apk"],
+        "options": {
+          "cwd": "Android/fusionstream"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Clean, Build, and Install",
+        "type": "process",
+        "command": "cmd",
+        "args": [
+          "/c",
+          "cordova clean && cordova build android && adb install -r platforms/android/app/build/outputs/apk/debug/app-debug.apk"
+        ],
+        "options": {
+          "cwd": "Android/fusionstream"
+        },
+        "problemMatcher": []
+      }
+    ]
+  }
+  

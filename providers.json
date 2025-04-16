@@ -1,18 +1,17 @@
 {
-    "zoro": {
-      "enable": true,
-      "displayname": "V1 (Anime)",
-      "link": "https://consumet.8man.me/anime/zoro"
-    },
-    "multimovies": {
-      "enable": true,
-      "displayname": "V2 (TV,Movies,Anime)",
-      "link": "https://multimovies.guru"
-    },
-    "dramacool":{
-      "enable": false,
-      "displayname": "V2 (TV Series)",
-      "link": "https://consumet.8man.me/movies/dramacool"
-    }
+  "zoro": {
+    "enable": true,
+    "displayname": "V1 (Anime)",
+    "link": "https://consumet.8man.me/anime/zoro"
+  },
+  "multimovies": {
+    "enable": true,
+    "displayname": "V2 (TV,Movies,Anime)",
+    "link": "https://multimovies.guru"
+  },
+  "dramacool":{
+    "enable": false,
+    "displayname": "V2 (TV Series)",
+    "link": "https://consumet.8man.me/movies/dramacool"
   }
-  
+}

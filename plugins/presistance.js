@@ -1,47 +1,52 @@
 export const name = "Presistance";
-export const version = "1.0.2";
-export const description = "Tracks and displays your watch history directly in the FusionStream interface.";
+export const version = "1.0.3";
+export const description = "Tracks and displays your watch history directly in the FusionStream interface. [Note] This Option Will Work only for V1(Anime)";
 export const image = "https://i.ibb.co/DH1sVskT/Chat-GPT-Image-Apr-11-2025-01-42-34-PM.png";
 
 export function register({ electronApp }) {
   console.log("🔌 Presistance plugin loaded");
 
-  // Function to listen to API calls to the '/watch' endpoint
   const listenToWatchRoute = (window) => {
     const { webContents } = window;
 
-    // Listen for requests to the /watch API endpoint
     webContents.session.webRequest.onCompleted((details) => {
-      // Check if the request is to the '/watch' endpoint
       if (details.url.includes("/watch")) {
-        // Extract the query parameters
         const urlParams = new URLSearchParams(details.url.split('?')[1]);
         const episodeId = urlParams.get('episodeId');
+        const id = episodeId?.split('$episode')[0];
         const providerKey = urlParams.get('provider');
 
         if (episodeId && providerKey) {
-          // Use the episodeId and providerKey to fetch episode info
-          // Note: You can adjust this based on how the API responds
-          fetch(`https://your-api-endpoint.com/watch?episodeId=${episodeId}&provider=${providerKey}`)
+          fetch(`http://localhost:3000/info?id=${id}&provider=${providerKey}`)
             .then(res => res.json())
             .then(data => {
-              // Save the watched episode to localStorage
+              const matchingEpisode = data.episodes?.find(ep => ep.id === episodeId);
+
               webContents.executeJavaScript(`
-                let watchHistory = JSON.parse(localStorage.getItem('watchHistory')) || [];
-                watchHistory.push({
-                  title: "${data.title}",
-                  thumbnail: "${data.thumbnail}",
-                  episodeId: "${episodeId}",
-                  provider: "${providerKey}"
-                });
-                localStorage.setItem('watchHistory', JSON.stringify(watchHistory));
-                console.log('Updated Watch History:', watchHistory);
+                (() => {
+                  var watchHistory = JSON.parse(localStorage.getItem('watchHistory')) || [];
+
+                  // Remove old entry with same episodeId
+                  watchHistory = watchHistory.filter(item => item.episodeId !== "${episodeId}");
+
+                  // Add new one at the beginning
+                  watchHistory.unshift({
+                    title: "${data.title}",
+                    epno: "${matchingEpisode?.number || 'N/A'}",
+                    thumbnail: "${data.thumbnail}",
+                    episodeId: "${episodeId}",
+                    provider: "${providerKey}"
+                  });
+
+                  localStorage.setItem('watchHistory', JSON.stringify(watchHistory));
+                  console.log('✅ Updated Watch History:', watchHistory);
+                })();
               `).catch(err => {
-                console.error("Error saving watch history:", err);
+                console.error("❌ Error saving watch history:", err);
               });
             })
             .catch(err => {
-              console.error("Failed to fetch episode data:", err);
+              console.error("❌ Failed to fetch episode data:", err);
             });
         }
       }
@@ -52,90 +57,142 @@ export function register({ electronApp }) {
     window.webContents.on('did-finish-load', async () => {
       const url = await window.webContents.getURL();
 
-      // Optional: only inject on homepage or specific page
-      if (!url.includes("index.html")) return;
+      // Inject Watch History on homepage
+      if (url.includes("index.html")) {
+        window.webContents.executeJavaScript(`
+          (() => {
+            var watchHistory = JSON.parse(localStorage.getItem('watchHistory')) || [];
 
-      window.webContents.executeJavaScript(`
-        // Fetch watch history from localStorage
-        let watchHistory = JSON.parse(localStorage.getItem('watchHistory')) || [];
+            const copyrightDiv = document.createElement('div');
+            copyrightDiv.className = 'copyright';
+            copyrightDiv.textContent = 'Test';
 
-        // Create the copyright div
-        const copyrightDiv = document.createElement('div');
-        copyrightDiv.className = 'copyright';
-        copyrightDiv.textContent = 'Test';
+            const historySection = document.createElement('div');
+            historySection.setAttribute('bis_skin_checked', '1');
+            historySection.innerHTML = "<h2>Watch History</h2>";
 
-        // Create the history section
-        const historySection = document.createElement('div');
-        historySection.setAttribute('bis_skin_checked', '1');
-        historySection.innerHTML = "<h2>Watch History</h2>";
+            const list = document.createElement('div');
+            list.className = "movie-grid";
+            list.setAttribute('bis_skin_checked', '1');
 
-        const list = document.createElement('div');
-        list.className = "movie-grid";
-        list.setAttribute('bis_skin_checked', '1');
+           if (watchHistory.length === 0) {
+  const noHistoryMessage = document.createElement('p');
+  noHistoryMessage.textContent = 'No History Available';
+  historySection.appendChild(noHistoryMessage);
+} else {
+  const uniqueByTitle = [];
+  const seenTitles = new Set();
 
-        // Check if history exists
-        if (watchHistory.length === 0) {
-          const noHistoryMessage = document.createElement('p');
-          noHistoryMessage.textContent = 'No History Available';
-          historySection.appendChild(noHistoryMessage);
-        } else {
-          // Display the history from localStorage
-          watchHistory.forEach(item => {
-            const card = document.createElement('div');
-            card.className = "movie-card";
-            card.setAttribute('bis_skin_checked', '1');
-            
-            const img = document.createElement('img');
-            img.src = item.thumbnail;
-            img.alt = item.title;
+  for (const item of watchHistory) {
+    if (!seenTitles.has(item.title)) {
+      seenTitles.add(item.title);
+      uniqueByTitle.push(item);
+    }
+  }
 
-            const title = document.createElement('p');
-            title.className = "card-title";
-            title.textContent = item.title;
+  uniqueByTitle.forEach(item => {
+    const link = document.createElement('a');
+    link.href = \`player.html?episodeId=\${item.episodeId}&title=\${encodeURIComponent(item.title)}&provider=\${item.provider}\`;
+    link.style.textDecoration = 'none';
+    link.style.color = 'inherit';
 
-            card.appendChild(img);
-            card.appendChild(title);
+    const card = document.createElement('div');
+    card.className = "movie-card";
+    card.setAttribute('bis_skin_checked', '1');
 
-            list.appendChild(card);
-          });
-        }
+    const img = document.createElement('img');
+    img.src = item.thumbnail;
+    img.alt = item.title;
 
-        historySection.appendChild(list);
+    const epBadge = document.createElement('div');
+    epBadge.textContent = item.epno;
+    epBadge.style.position = 'absolute';
+    epBadge.style.top = '8px';
+    epBadge.style.right = '8px';
+    epBadge.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    epBadge.style.color = '#fff';
+    epBadge.style.padding = '2px 6px';
+    epBadge.style.borderRadius = '6px';
+    epBadge.style.fontSize = '12px';
+    epBadge.style.zIndex = '1';
 
-        const viewMoreButton = document.createElement('button');
-        viewMoreButton.className = "view-more-button";
-        viewMoreButton.textContent = "View More";
-        viewMoreButton.style.marginTop = "10px";
-        historySection.appendChild(viewMoreButton);
+    const imgWrapper = document.createElement('div');
+    imgWrapper.style.position = 'relative';
+    imgWrapper.appendChild(img);
+    imgWrapper.appendChild(epBadge);
 
-        // Create the new presistance section
-        const presistanceSection = document.createElement('section');
-        presistanceSection.className = 'movies container';
-        presistanceSection.id = 'presistance';
+    const title = document.createElement('p');
+    title.className = "card-title";
+    title.textContent = item.title;
 
-        // Add the copyright and history section to the new presistance section
-        presistanceSection.appendChild(copyrightDiv);
-        presistanceSection.appendChild(historySection);
+    card.appendChild(imgWrapper);
+    card.appendChild(title);
+    link.appendChild(card);
+    list.appendChild(link);
+  });
+}
 
-        // Get the catalogSection and insert the presistance section above it
-        const catalogSection = document.getElementById("catalogSection");
-        if (catalogSection && catalogSection.parentNode) {
-          catalogSection.parentNode.insertBefore(presistanceSection, catalogSection);
-        }
-      `).then(() => {
-        listenToWatchRoute(window); // Start listening to the watch route after injecting
-      }).catch((err) => {
-        console.error("❌ Injection failed:", err);
-      });
+
+            historySection.appendChild(list);
+
+            const viewMoreButton = document.createElement('button');
+            viewMoreButton.className = "view-more-button";
+            viewMoreButton.textContent = "View More";
+            viewMoreButton.style.marginTop = "10px";
+            historySection.appendChild(viewMoreButton);
+
+            const presistanceSection = document.createElement('section');
+            presistanceSection.className = 'movies container';
+            presistanceSection.id = 'presistance';
+            presistanceSection.appendChild(copyrightDiv);
+            presistanceSection.appendChild(historySection);
+
+            const catalogSection = document.getElementById("catalogSection");
+            if (catalogSection && catalogSection.parentNode) {
+              catalogSection.parentNode.insertBefore(presistanceSection, catalogSection);
+            }
+          })();
+        `).then(() => {
+          listenToWatchRoute(window);
+        }).catch((err) => {
+          console.error("❌ Injection failed:", err);
+        });
+      }
+
+      // Inject Clear History button on settings page
+      if (url.includes("settings.html")) {
+        window.webContents.executeJavaScript(`
+          (() => {
+            const settingsContainer = document.querySelector('.settings') || document.body;
+
+            const clearButton = document.createElement('button');
+            clearButton.textContent = "Clear Watch History";
+            clearButton.style.padding = "10px 15px";
+            clearButton.style.marginTop = "20px";
+            clearButton.style.backgroundColor = "#ff4d4f";
+            clearButton.style.color = "white";
+            clearButton.style.border = "none";
+            clearButton.style.borderRadius = "6px";
+            clearButton.style.cursor = "pointer";
+
+            clearButton.addEventListener('click', () => {
+              localStorage.removeItem('watchHistory');
+              alert("✅ Watch history cleared!");
+            });
+
+            settingsContainer.appendChild(clearButton);
+          })();
+        `).catch((err) => {
+          console.error("❌ Failed to inject clear history button:", err);
+        });
+      }
     });
   };
 
-  // Inject into future windows
   electronApp.on('browser-window-created', (event, window) => {
     injectInto(window);
   });
 
-  // Inject into already open windows
   import('electron').then(({ BrowserWindow }) => {
     const allWindows = BrowserWindow.getAllWindows();
     allWindows.forEach((win) => {

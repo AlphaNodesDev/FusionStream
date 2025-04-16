@@ -10,7 +10,7 @@
     {
       "id": "presistance.js",
       "name": "Presistance",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "description": "Tracks and displays your watch history directly in the FusionStream interface.",
       "image": "https://i.ibb.co/DH1sVskT/Chat-GPT-Image-Apr-11-2025-01-42-34-PM.png",
       "url": "https://raw.githubusercontent.com/AlphaNodesDev/FusionStream/main/plugins/presistance.js"

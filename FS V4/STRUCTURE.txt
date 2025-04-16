@@ -1,41 +1,52 @@
-📁 FS Stream/
-│
-├── 📁 assets/
-│   ├── 📁 appearance/
-│   │   ├── styles.css
-│   │   └── ... (Other visual/theme assets)
-│   │
-│   ├── 📁 resources/
-│   │   ├── 📁 api/                    # All modular Express routes
-│   │   │   ├── api-play.js
-│   │   │   ├── api-info.js
-│   │   │   ├── api-search.js
-│   │   │   ├── api-catalog.js
-│   │   │   └── api-providers.js
-│   │   │
-│   │   ├── 📁 res/
-│   │   │   ├── 📁 icons/
-│   │   │   │   └── icon.ico
-│   │   │   │
-│   │   │   ├── 📁 js/
-│   │   │   │   ├── renderer.js
-│   │   │   │   ├── scripts.js
-│   │   │   │   └── ... (Other frontend JS logic)
-│   │   │   │
-│   │   │   └── 📁 UI/
-│   │   │       ├── index.html
-│   │   │       ├── settings.html
-│   │   │       ├── player.html
-│   │   │       ├── info.html
-│   │   │       ├── login.html
-│   │   │       └── extensions.html
-│
-├── 📁 extensions/
-│   └── discord-rpc.js
-│
-├── 📁 providers/
-│   ├── zoro.js
-│   └── multimovie.js
-│
-├── main.js
-├── package.json
+```
+└── 📁FS V4
+    └── 📁assets
+        └── 📁appearance
+            └── styles.css
+            └── swiper-bundle.min.css
+        └── 📁resources
+            └── 📁api
+                └── api-catalog.js
+                └── api-events.js
+                └── api-extensions.js
+                └── api-info.js
+                └── api-play.js
+                └── api-providers.js
+                └── api-search.js
+                └── api-watch.js
+            └── 📁res
+                └── 📁icons
+                    └── icon.ico
+                    └── icon2.ico
+                    └── icon3.ico
+                    └── image.png
+                    └── image2.png
+                    └── logo.png
+                    └── logo2.png
+                └── 📁js
+                    └── event.js
+                    └── gethub.js
+                    └── renderer.js
+                    └── script.js
+                    └── swiper-bundle.min.js
+                └── 📁UI
+                    └── extentions.html
+                    └── index.html
+                    └── info.html
+                    └── login.html
+                    └── logout.html
+                    └── player.html
+                    └── settings.html
+    └── 📁providers
+        └── dramacool.js
+        └── multimovies.js
+        └── zoro.js
+    └── .env
+    └── license.txt
+    └── main.js
+    └── package-lock.json
+    └── package.json
+    └── preload.cjs
+    └── renderer.js
+    └── STRUCTURE.txt
+```
