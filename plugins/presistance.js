@@ -159,33 +159,36 @@ export function register({ electronApp }) {
         });
       }
 
-      // Inject Clear History button on settings page
       if (url.includes("settings.html")) {
         window.webContents.executeJavaScript(`
           (() => {
-            const settingsContainer = document.querySelector('.settings') || document.body;
-
+            const subtitleSettings = document.querySelector('.subtitle-settings');
+            if (!subtitleSettings) return;
+      
             const clearButton = document.createElement('button');
-            clearButton.textContent = "Clear Watch History";
-            clearButton.style.padding = "10px 15px";
+            clearButton.textContent = "🧹 Clear Watch History";
+            clearButton.style.padding = "12px 20px";
             clearButton.style.marginTop = "20px";
             clearButton.style.backgroundColor = "#ff4d4f";
             clearButton.style.color = "white";
             clearButton.style.border = "none";
-            clearButton.style.borderRadius = "6px";
+            clearButton.style.borderRadius = "8px";
             clearButton.style.cursor = "pointer";
-
+            clearButton.style.width = "100%";
+            clearButton.style.maxWidth = "200px";
+      
             clearButton.addEventListener('click', () => {
               localStorage.removeItem('watchHistory');
               alert("✅ Watch history cleared!");
             });
-
-            settingsContainer.appendChild(clearButton);
+      
+            subtitleSettings.appendChild(clearButton);
           })();
         `).catch((err) => {
           console.error("❌ Failed to inject clear history button:", err);
         });
       }
+      
     });
   };
 
