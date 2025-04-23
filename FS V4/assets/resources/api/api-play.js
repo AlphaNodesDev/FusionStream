@@ -35,7 +35,14 @@ export default function (api) {
     }
 
     // VLC command
-    let command = `"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe" "${url}" --network-caching=10000`;
+    let command = `"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe" "${url}" \
+    --network-caching=100000 \
+    --file-caching=100000 \
+    --http-caching=100000 \
+    --rtsp-caching=100000 \
+    --tcp-caching=100000 \
+    --play-and-pause`;
+  
 
     if (subtitlePath) {
       command += ` --sub-file="${subtitlePath}"`;

@@ -58,9 +58,9 @@ function createWindow() {
     width: 1000,
     height: 800,
     icon: path.join(__dirname, 'logo.png'),
-   //frame: false,
-  //titleBarStyle: 'hiddenInset',
-  //  backgroundColor: '#000000',
+   frame: false,
+  titleBarStyle: 'hiddenInset',
+    backgroundColor: '#000000',
    webPreferences: {
     preload: path.join(__dirname, 'preload.js'),
     contextIsolation: false,
