@@ -62,7 +62,7 @@ export async function fetchCatalog(filter) {
 }
 
 export async function search(query) {
-  const url = `c/?s=${encodeURIComponent(query)}`;
+  const url = `https://multimovies.digital/?s=${encodeURIComponent(query)}`;
   const cached = cacheGet(url);
   if (cached) return cached;
 
