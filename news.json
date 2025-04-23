@@ -3,5 +3,5 @@
   "message": "Our app is under active development, and some features may experience temporary issues. We're pushing frequent updates to improve stability and add new functionality. Please consider keeping your app updated to the latest version for the best experience.",
   "startDate": "2025-04-09",
   "endDate": "2025-04-20",
-  "show": false
+  "show": true
 }
