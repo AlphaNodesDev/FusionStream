@@ -13,5 +13,10 @@
     "enable": true,
     "displayname": "V3 (TV Series)",
     "link": "https://consumet.8man.me/movies/dramacool"
+  },
+  "primewire": {
+     "enable": true,
+    "displayname": "primewire",
+    "link": "https://www.primewire.tf"
   }
 }
