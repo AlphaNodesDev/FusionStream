@@ -17,7 +17,7 @@
     "rivestream":{
     "enable": true,
     "displayname": "V3 (TV Series)",
-    "link": "https://rivestream.org""
+    "link": "https://rivestream.org"
   },
   "primewire": {
      "enable": true,
