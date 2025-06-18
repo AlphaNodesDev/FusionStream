@@ -14,6 +14,11 @@
     "displayname": "V3 (TV Series)",
     "link": "https://consumet.8man.me/movies/dramacool"
   },
+    "rivestream":{
+    "enable": true,
+    "displayname": "V3 (TV Series)",
+    "link": "https://rivestream.org""
+  },
   "primewire": {
      "enable": true,
     "displayname": "primewire",
