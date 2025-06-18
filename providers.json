@@ -10,8 +10,8 @@
     "link": "https://consumet.8man.me/anime/zoro"
   },
   "dramacool":{
-    "enable": false,
-    "displayname": "V2 (TV Series)",
+    "enable": true,
+    "displayname": "V3 (TV Series)",
     "link": "https://consumet.8man.me/movies/dramacool"
   }
 }
