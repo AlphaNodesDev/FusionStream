@@ -1,0 +1,12 @@
+{
+  "name": "VidLink",
+  "description": "Web player. Movies and TV, auto-next. Uses TMDB ids.",
+  "type": "embed",
+  "types": ["movie", "series"],
+  "embed": {
+    "movie": "https://vidlink.pro/movie/{tmdb}",
+    "series": "https://vidlink.pro/tv/{tmdb}/{season}/{episode}"
+  },
+  "allowedHosts": ["vidlink.pro"],
+  "enabled": true
+}

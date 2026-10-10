@@ -1,0 +1,12 @@
+{
+  "name": "VidRock",
+  "description": "Web player. Movies and TV by IMDb id.",
+  "type": "embed",
+  "types": ["movie", "series"],
+  "embed": {
+    "movie": "https://vidrock.net/movie/{imdb}",
+    "series": "https://vidrock.net/tv/{imdb}/{season}/{episode}"
+  },
+  "allowedHosts": ["vidrock.net"],
+  "enabled": true
+}

@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "providers": [
+    "eztv",
+    "nyaa",
+    "vidlink",
+    "videasy",
+    "vidfast",
+    "vidsrc",
+    "2embed",
+    "vidrock"
+  ]
+}

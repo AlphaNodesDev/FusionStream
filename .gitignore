@@ -11,6 +11,8 @@
 /FS V4/node_modules
 /FS V4/dist
 /FS V4/build
+/FS V5/node_modules
+/FS V5/dist
 .env
 /Android
 /FS V2/my-proxy-server

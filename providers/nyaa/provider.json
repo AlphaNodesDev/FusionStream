@@ -1,0 +1,8 @@
+{
+  "name": "Nyaa",
+  "description": "Anime torrents from nyaa.si (English-translated). Only used for titles tagged as Animation.",
+  "type": "script",
+  "script": "index.js",
+  "types": ["movie", "series"],
+  "enabled": true
+}

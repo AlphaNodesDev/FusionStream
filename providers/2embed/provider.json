@@ -1,0 +1,12 @@
+{
+  "name": "2Embed",
+  "description": "Web player. Movies and TV by IMDb id. More ads than others.",
+  "type": "embed",
+  "types": ["movie", "series"],
+  "embed": {
+    "movie": "https://www.2embed.cc/embed/{imdb}",
+    "series": "https://www.2embed.cc/embedtv/{imdb}&s={season}&e={episode}"
+  },
+  "allowedHosts": ["2embed.cc"],
+  "enabled": false
+}

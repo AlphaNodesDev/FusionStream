@@ -1,0 +1,12 @@
+{
+  "name": "VidSrc",
+  "description": "Web player. Movies and TV by IMDb id.",
+  "type": "embed",
+  "types": ["movie", "series"],
+  "embed": {
+    "movie": "https://vidsrc.to/embed/movie/{imdb}",
+    "series": "https://vidsrc.to/embed/tv/{imdb}/{season}/{episode}"
+  },
+  "allowedHosts": ["vidsrc.to"],
+  "enabled": true
+}

@@ -1,0 +1,80 @@
+{
+  "name": "fusionstream",
+  "version": "2.0.0",
+  "description": "FusionStream - a media center for movies and series with an addon system.",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win nsis",
+    "build:store": "electron-builder --win appx --config electron-builder.store.cjs",
+    "store:test": "powershell -NoProfile -Command \"$env:FUSION_STORE='1'; npx electron .\""
+  },
+  "author": "Abhirm",
+  "license": "MIT",
+  "build": {
+    "appId": "com.alphanodes.fusionstream",
+    "productName": "FusionStream",
+    "extraResources": [
+      {
+        "from": "../providers",
+        "to": "providers",
+        "filter": ["**/*", "!README.md"]
+      }
+    ],
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!**/*.map",
+      "!dist/**"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico",
+      "artifactName": "${productName}-${version}-setup.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "createDesktopShortcut": true,
+      "shortcutName": "FusionStream"
+    },
+    "appx": {
+      "identityName": "SCIFYTECHNOLOGIESPRIVATEL.FusionStream",
+      "publisher": "CN=428DD514-C501-41F7-8A0C-C6A7E19E2A53",
+      "publisherDisplayName": "SCIFY TECHNOLOGIES PRIVATE LIMITED",
+      "displayName": "FusionStream",
+      "applicationId": "FusionStream",
+      "backgroundColor": "#16161f",
+      "languages": ["en-US"],
+      "showNameOnTiles": true,
+      "artifactName": "${productName}-${version}-store.${ext}"
+    },
+    "protocols": [
+      {
+        "name": "FusionStream addon link",
+        "schemes": ["fusionstream"]
+      }
+    ],
+    "mac": {
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "icon": "build/icon.png"
+    }
+  },
+  "dependencies": {
+    "@ghostery/adblocker-electron": "2.20.1",
+    "webtorrent": "3.0.21"
+  },
+  "devDependencies": {
+    "electron": "38.2.2",
+    "electron-builder": "26.0.12"
+  }
+}

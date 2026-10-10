@@ -1,0 +1,12 @@
+{
+  "name": "VidFast",
+  "description": "Web player. Movies and TV by IMDb id.",
+  "type": "embed",
+  "types": ["movie", "series"],
+  "embed": {
+    "movie": "https://vidfast.pro/movie/{imdb}",
+    "series": "https://vidfast.pro/tv/{imdb}/{season}/{episode}"
+  },
+  "allowedHosts": ["vidfast.pro"],
+  "enabled": true
+}

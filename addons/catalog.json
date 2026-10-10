@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "updated": "2026-10-10",
+  "note": "FusionStream addon catalog. The app downloads this file to show the Addon Store. 'packs' are one-click bundles; 'store' marks addons allowed in the Microsoft Store edition.",
+  "categories": [
+    { "id": "official", "name": "FusionStream" },
+    { "id": "catalogs", "name": "Catalogs & info" },
+    { "id": "streams", "name": "Streams" },
+    { "id": "subtitles", "name": "Subtitles" },
+    { "id": "other", "name": "More" }
+  ],
+  "addons": [
+    {
+      "id": "fusion.archive",
+      "name": "Public Domain Movies",
+      "description": "Thousands of classic films that are free to watch, from Internet Archive. Built into FusionStream.",
+      "url": "fusion://archive/manifest.json",
+      "category": "official",
+      "store": true,
+      "builtin": true
+    },
+    {
+      "id": "cinemeta",
+      "name": "Cinemeta",
+      "description": "Popular, new and top-rated movies and series with full information and artwork.",
+      "url": "https://v3-cinemeta.strem.io/manifest.json",
+      "category": "catalogs",
+      "store": true
+    },
+    {
+      "id": "tmdb",
+      "name": "The Movie Database",
+      "description": "Extra catalogs from TMDB: trending, by genre, by year and by streaming service. Multi-language.",
+      "url": "https://94c8cb9f702d-tmdb-addon.baby-beamup.club/manifest.json",
+      "category": "catalogs",
+      "store": true
+    },
+    {
+      "id": "anime-catalogs",
+      "name": "Anime Catalogs",
+      "description": "Anime catalogs from MyAnimeList, AniList, Kitsu and more.",
+      "url": "https://1fe84bc728af-stremio-anime-catalogs.baby-beamup.club/manifest.json",
+      "category": "catalogs",
+      "store": true
+    },
+    {
+      "id": "youtube",
+      "name": "YouTube",
+      "description": "Watch YouTube channels inside FusionStream.",
+      "url": "https://v3-channels.strem.io/manifest.json",
+      "category": "other",
+      "store": true
+    },
+    {
+      "id": "watchhub",
+      "name": "WatchHub",
+      "description": "Shows where to legally watch a title: Netflix, Prime Video, Disney+, Apple TV and more. Opens in your browser.",
+      "url": "https://watchhub.strem.io/manifest.json",
+      "category": "streams",
+      "store": true
+    },
+    {
+      "id": "opensubtitles",
+      "name": "OpenSubtitles",
+      "description": "Subtitles in many languages for movies and series.",
+      "url": "https://opensubtitles-v3.strem.io/manifest.json",
+      "category": "subtitles",
+      "store": true
+    },
+    {
+      "id": "torrentio",
+      "name": "Torrentio",
+      "description": "Third-party torrent addon (not made by FusionStream). Streams from public torrent sites.",
+      "url": "https://torrentio.strem.fun/manifest.json",
+      "category": "streams",
+      "store": false,
+      "thirdParty": true
+    }
+  ],
+  "packs": [
+    {
+      "id": "starter",
+      "name": "Starter pack",
+      "description": "Everything you need to start: catalogs, information, subtitles and legal free movies.",
+      "addons": ["fusion.archive", "cinemeta", "tmdb", "opensubtitles", "watchhub"],
+      "store": true
+    },
+    {
+      "id": "anime",
+      "name": "Anime pack",
+      "description": "Anime catalogs and subtitles.",
+      "addons": ["anime-catalogs", "cinemeta", "opensubtitles"],
+      "store": true
+    }
+  ]
+}

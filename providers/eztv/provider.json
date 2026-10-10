@@ -1,0 +1,8 @@
+{
+  "name": "EZTV",
+  "description": "TV episode torrents from the EZTV API.",
+  "type": "script",
+  "script": "index.js",
+  "types": ["series"],
+  "enabled": true
+}

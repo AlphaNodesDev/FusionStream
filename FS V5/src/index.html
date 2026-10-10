@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http:; media-src 'self' blob: http: https:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'none'; frame-src 'none'" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FusionStream</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#view">Skip to content</a>
+
+  <div class="shell">
+    <nav class="sidebar" aria-label="Main">
+      <img class="brand" src="assets/logo.png" alt="FusionStream" />
+      <span class="nav-indicator" aria-hidden="true"></span>
+      <a href="#/board" class="nav-item" data-route="board" title="Board">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg>
+        <span>Board</span>
+      </a>
+      <a href="#/discover" class="nav-item" data-route="discover" title="Discover">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm3.5 6.5-2 5-5 2 2-5z"/></svg>
+        <span>Discover</span>
+      </a>
+      <a href="#/library" class="nav-item" data-route="library" title="Library">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h4v18H4zM10 3h4v18h-4zM16.5 3.6l3.9-1 4 17.4-3.9.9z" transform="scale(.92) translate(1 1)"/></svg>
+        <span>Library</span>
+      </a>
+      <a href="#/addons" class="nav-item" data-route="addons" title="Addons">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3a2 2 0 0 1 4 0v2h4a1 1 0 0 1 1 1v4h-2a2 2 0 0 0 0 4h2v4a1 1 0 0 1-1 1h-4v-2a2 2 0 0 0-4 0v2H6a1 1 0 0 1-1-1v-4h2a2 2 0 0 0 0-4H5V6a1 1 0 0 1 1-1h4z"/></svg>
+        <span>Addons</span>
+      </a>
+      <a href="#/settings" class="nav-item" data-route="settings" title="Settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L14.9 3h-4l-.4 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.4 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.9h4l.4-2.9a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12.9 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
+
+    <div class="main">
+      <header class="topbar">
+        <div class="wordmark" aria-hidden="true">Fusion<span>Stream</span></div>
+        <form id="search-form" class="search" role="search">
+          <label for="search-input" class="sr-only">Search movies and series</label>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2a8 8 0 0 1 6.3 12.9l5.4 5.4-1.4 1.4-5.4-5.4A8 8 0 1 1 10 2zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12z"/></svg>
+          <input id="search-input" type="search" placeholder="Search movies & series…" autocomplete="off" />
+        </form>
+      </header>
+      <main id="view" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <!-- Player overlay -->
+  <section id="player" class="player hidden" aria-label="Video player" inert>
+    <video id="video" playsinline></video>
+
+    <div class="player-top">
+      <button id="p-back" class="icon-btn" aria-label="Back">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z"/></svg>
+      </button>
+      <div class="player-title">
+        <div id="p-title"></div>
+        <div id="p-subtitle" class="muted"></div>
+      </div>
+      <div id="p-stats" class="player-stats" aria-live="polite"></div>
+    </div>
+
+    <!-- Center feedback icon (play/pause/seek), animated -->
+    <div id="p-flash" class="player-flash" aria-hidden="true"></div>
+
+    <div id="p-status" class="player-status" role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <div id="p-status-text">Loading…</div>
+      <div id="p-status-actions" class="player-status-actions"></div>
+    </div>
+
+    <div class="player-bottom">
+      <div class="seek-row">
+        <span id="p-time" class="time">0:00</span>
+        <input id="p-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek" />
+        <span id="p-duration" class="time">0:00</span>
+      </div>
+      <div class="controls-row">
+        <button id="p-play" class="icon-btn" aria-label="Play">
+          <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+          <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+        </button>
+        <button id="p-back10" class="icon-btn" aria-label="Back 10 seconds">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></svg>
+        </button>
+        <button id="p-fwd10" class="icon-btn" aria-label="Forward 10 seconds">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V1l5 5-5 5V7a6 6 0 1 0 6 6h2a8 8 0 1 1-8-8z"/></svg>
+        </button>
+        <button id="p-mute" class="icon-btn" aria-label="Mute">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg>
+        </button>
+        <input id="p-volume" type="range" min="0" max="1" step="0.05" value="1" aria-label="Volume" />
+        <div class="spacer"></div>
+        <button id="p-next" class="btn small hidden">Next episode</button>
+        <label class="sr-only" for="p-subs">Subtitles</label>
+        <select id="p-subs" class="select small" aria-label="Subtitles"><option value="">Subtitles off</option></select>
+        <button id="p-external" class="btn small" title="Open in VLC">Open in VLC</button>
+        <button id="p-fullscreen" class="icon-btn" aria-label="Fullscreen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Install-addon confirmation (opened by fusionstream:// links) -->
+  <dialog id="install-dialog" class="modal" aria-labelledby="install-title">
+    <form method="dialog" class="modal-body">
+      <div class="modal-head">
+        <img id="install-logo" class="addon-logo" alt="" src="assets/logo.png" />
+        <div>
+          <h2 id="install-title">Install addon?</h2>
+          <div id="install-sub" class="muted"></div>
+        </div>
+      </div>
+      <p id="install-desc" class="desc"></p>
+      <div id="install-types" class="addon-types"></div>
+      <div id="install-url" class="install-url"></div>
+      <div id="install-warn" class="info-box hidden"></div>
+      <div class="actions modal-actions">
+        <button value="cancel" class="btn ghost">Cancel</button>
+        <button value="install" id="install-ok" class="btn">Install</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
